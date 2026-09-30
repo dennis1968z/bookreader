@@ -5,3 +5,4 @@ edge-tts
 pymupdf
 ebooklib
 python-docx
+olefile

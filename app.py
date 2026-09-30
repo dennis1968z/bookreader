@@ -96,6 +96,61 @@ def extract_docx(data: bytes) -> str:
         raise RuntimeError('DOCX needs: pip install python-docx')
 
 
+def extract_doc(data: bytes) -> str:
+    """Extract text from old binary .doc (Word 97-2003) via OLE2 parsing."""
+    import struct, re
+
+    # Some .doc files are actually OOXML — try python-docx first
+    try:
+        from docx import Document
+        text = '\n\n'.join(p.text for p in Document(io.BytesIO(data)).paragraphs if p.text.strip())
+        if len(text) > 50:
+            return text
+    except Exception:
+        pass
+
+    # OLE2 binary .doc: scan WordDocument stream for UTF-16LE text runs
+    try:
+        import olefile
+        if not olefile.isOleFile(io.BytesIO(data)):
+            raise ValueError('Not OLE2')
+        ole = olefile.OleFileIO(io.BytesIO(data))
+        try:
+            stream = ole.openstream('WordDocument').read()
+        finally:
+            ole.close()
+
+        parts, run = [], []
+        i = 0
+        while i < len(stream) - 1:
+            try:
+                cp = struct.unpack_from('<H', stream, i)[0]
+                ch = chr(cp)
+                if 0x20 <= cp < 0xD800 and ch.isprintable():
+                    run.append(ch)
+                elif cp in (0x000D, 0x0007, 0x000C):   # paragraph / page break
+                    if run:
+                        parts.append(''.join(run)); run = []
+                    parts.append('\n')
+                elif run:
+                    parts.append(''.join(run)); run = []
+            except Exception:
+                pass
+            i += 2
+        if run:
+            parts.append(''.join(run))
+
+        text = re.sub(r'\n{3,}', '\n\n', ''.join(parts)).strip()
+        if len(text) > 50:
+            return text
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    raise RuntimeError('.doc 解析失败，建议在 Word 中另存为 .docx 格式后重试')
+
+
 # ─── Edge TTS synthesis ───────────────────────────────────────────────────────
 
 async def _synth_async(text: str, voice: str, rate: str):
@@ -148,8 +203,10 @@ def upload():
             text = extract_pdf(data)
         elif name.endswith('.epub'):
             text = extract_epub(data)
-        elif name.endswith(('.docx', '.doc')):
+        elif name.endswith('.docx'):
             text = extract_docx(data)
+        elif name.endswith('.doc'):
+            text = extract_doc(data)
         else:
             return jsonify({'error': f'Unsupported format: {name.split(".")[-1]}'}), 400
         paras = split_paragraphs(text)
