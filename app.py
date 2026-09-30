@@ -195,7 +195,7 @@ def synthesize():
 
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 7860
+    port = int(os.environ.get('PORT', sys.argv[1] if len(sys.argv) > 1 else 7860))
     print(f'[Book Reader – Edge TTS]  http://localhost:{port}')
     print('  Online TTS via Microsoft Edge – no local model required.')
     print('  Press Ctrl+C to stop.')
