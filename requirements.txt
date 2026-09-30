@@ -1,8 +1,7 @@
 flask
 edge-tts
 
-# Optional format support:
-# pip install pymupdf       → PDF (faster)
-# pip install pdfminer.six  → PDF (fallback)
-# pip install ebooklib      → EPUB
-# pip install python-docx   → DOCX
+# Ebook / document format support
+pymupdf
+ebooklib
+python-docx
