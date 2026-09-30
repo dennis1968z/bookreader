@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.npz
+*.bin
+*.wav
+*.mp3
+*.onnx
+voices.npz
+vocab_debug.json
+test_*.txt
+test_*.wav
+.env

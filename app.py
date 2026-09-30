@@ -1,0 +1,202 @@
+"""Book Reader – Edge TTS backend (online, low-latency, no local model)."""
+import io, re, os, sys, json, asyncio, warnings
+warnings.filterwarnings('ignore')
+
+from flask import Flask, request, jsonify, send_file, Response
+import edge_tts
+
+app = Flask(__name__)
+
+
+# ─── Language detection ───────────────────────────────────────────────────────
+
+def detect_lang(text: str) -> str:
+    cjk = sum(1 for c in text if '一' <= c <= '鿿')
+    return 'z' if cjk / max(len(text), 1) > 0.08 else 'a'
+
+
+# ─── Text utilities ───────────────────────────────────────────────────────────
+
+def split_paragraphs(text: str) -> list:
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    blocks = re.split(r'\n{2,}', text.strip())
+    result = []
+    for block in blocks:
+        block = re.sub(r'\s+', ' ', block).strip()
+        if len(block) < 8:
+            continue
+        if len(block) > 500:
+            sents = re.split(r'(?<=[。！？.!?])\s*', block)
+            chunk = ''
+            for s in sents:
+                if len(chunk) + len(s) <= 450:
+                    chunk += s
+                else:
+                    if chunk.strip():
+                        result.append(chunk.strip())
+                    chunk = s
+            if chunk.strip():
+                result.append(chunk.strip())
+        else:
+            result.append(block)
+    return result
+
+
+# ─── File extractors ──────────────────────────────────────────────────────────
+
+def extract_pdf(data: bytes) -> str:
+    try:
+        import fitz
+        doc = fitz.open(stream=data, filetype='pdf')
+        return '\n\n'.join(page.get_text() for page in doc)
+    except ImportError:
+        pass
+    try:
+        from pdfminer.high_level import extract_text
+        return extract_text(io.BytesIO(data))
+    except ImportError:
+        raise RuntimeError('PDF needs: pip install pymupdf  or  pip install pdfminer.six')
+
+
+def extract_epub(data: bytes) -> str:
+    try:
+        import tempfile, ebooklib
+        from ebooklib import epub
+        from html.parser import HTMLParser
+
+        class Stripper(HTMLParser):
+            def __init__(self):
+                super().__init__(); self.parts = []
+            def handle_data(self, d):
+                if d.strip(): self.parts.append(d)
+
+        with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as f:
+            f.write(data)
+            tmp_path = f.name
+        try:
+            book = epub.read_epub(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+        chapters = []
+        for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+            s = Stripper()
+            s.feed(item.get_content().decode('utf-8', errors='replace'))
+            chapters.append('\n'.join(s.parts))
+        return '\n\n'.join(chapters)
+    except ImportError:
+        raise RuntimeError('EPUB needs: pip install ebooklib')
+
+
+def extract_docx(data: bytes) -> str:
+    try:
+        from docx import Document
+        doc = Document(io.BytesIO(data))
+        return '\n\n'.join(p.text for p in doc.paragraphs if p.text.strip())
+    except ImportError:
+        raise RuntimeError('DOCX needs: pip install python-docx')
+
+
+# ─── Edge TTS synthesis ───────────────────────────────────────────────────────
+
+async def _synth_async(text: str, voice: str, rate: str):
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
+    audio = b''
+    timings = []
+    async for chunk in communicate.stream():
+        if chunk['type'] == 'audio':
+            audio += chunk['data']
+        elif chunk['type'] in ('WordBoundary', 'SentenceBoundary'):
+            timings.append({
+                'text': chunk['text'],
+                'start': round(chunk['offset'] / 10_000_000, 3),
+                'end':   round((chunk['offset'] + chunk['duration']) / 10_000_000, 3),
+            })
+    return audio, timings
+
+
+def run_async(coro):
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+
+
+# ─── Routes ───────────────────────────────────────────────────────────────────
+
+@app.route('/')
+def index():
+    return send_file('index.html')
+
+
+@app.route('/status')
+def status():
+    return jsonify({'backend': 'edge-tts', 'state': 'ready'})
+
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    f = request.files.get('file')
+    if not f:
+        return jsonify({'error': 'No file'}), 400
+    name = f.filename.lower()
+    data = f.read()
+    try:
+        if name.endswith(('.txt', '.md', '.text')):
+            text = data.decode('utf-8', errors='replace')
+        elif name.endswith('.pdf'):
+            text = extract_pdf(data)
+        elif name.endswith('.epub'):
+            text = extract_epub(data)
+        elif name.endswith(('.docx', '.doc')):
+            text = extract_docx(data)
+        else:
+            return jsonify({'error': f'Unsupported format: {name.split(".")[-1]}'}), 400
+        paras = split_paragraphs(text)
+        if not paras:
+            return jsonify({'error': 'No text found'}), 400
+        lang = detect_lang(' '.join(paras[:10]))
+        return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/synthesize', methods=['POST'])
+def synthesize():
+    body = request.json or {}
+    text = (body.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Empty text'}), 400
+
+    lang = body.get('lang') or detect_lang(text)
+    default_voice = 'zh-CN-XiaoxiaoNeural' if lang == 'z' else 'en-US-JennyNeural'
+    voice = body.get('voice') or default_voice
+    speed = float(body.get('speed', 1.0))
+
+    rate_pct = int((speed - 1.0) * 100)
+    rate_str = f'+{rate_pct}%' if rate_pct >= 0 else f'{rate_pct}%'
+
+    try:
+        audio, timings = run_async(_synth_async(text, voice, rate_str))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    if not audio:
+        return jsonify({'error': 'No audio returned'}), 500
+
+    return Response(
+        audio,
+        mimetype='audio/mpeg',
+        headers={
+            'X-Timings': json.dumps(timings, ensure_ascii=True),
+            'Access-Control-Expose-Headers': 'X-Timings',
+        }
+    )
+
+
+if __name__ == '__main__':
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 7860
+    print(f'[Book Reader – Edge TTS]  http://localhost:{port}')
+    print('  Online TTS via Microsoft Edge – no local model required.')
+    print('  Press Ctrl+C to stop.')
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
