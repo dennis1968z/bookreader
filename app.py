@@ -1,11 +1,56 @@
 """Book Reader – Edge TTS backend (online, low-latency, no local model)."""
-import io, re, os, sys, json, asyncio, warnings, base64
+import io, re, os, sys, json, asyncio, warnings, base64, uuid
 warnings.filterwarnings('ignore')
 
 from flask import Flask, request, jsonify, send_file, Response
 import edge_tts
+import requests as _http
 
 app = Flask(__name__)
+
+
+# ─── Supabase helpers ─────────────────────────────────────────────────────────
+_SB_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
+_SB_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+
+def _sb_ok():
+    return bool(_SB_URL and _SB_KEY)
+
+def _sb_hdrs():
+    return {
+        'apikey': _SB_KEY,
+        'Authorization': f'Bearer {_SB_KEY}',
+        'Content-Type': 'application/json',
+    }
+
+def sb_save(book_id: str, title: str, cover, paragraphs: list, lang: str) -> bool:
+    if not _sb_ok():
+        return False
+    try:
+        r = _http.post(
+            f'{_SB_URL}/rest/v1/books',
+            headers={**_sb_hdrs(), 'Prefer': 'return=minimal'},
+            json={'id': book_id, 'title': title, 'cover': cover,
+                  'paragraphs': paragraphs, 'lang': lang},
+            timeout=15,
+        )
+        return r.status_code in (200, 201)
+    except Exception:
+        return False
+
+def sb_get(book_id: str):
+    if not _sb_ok():
+        return None
+    try:
+        r = _http.get(
+            f'{_SB_URL}/rest/v1/books?id=eq.{book_id}&select=*',
+            headers=_sb_hdrs(),
+            timeout=10,
+        )
+        data = r.json()
+        return data[0] if isinstance(data, list) and data else None
+    except Exception:
+        return None
 
 
 # ─── Language detection ───────────────────────────────────────────────────────
@@ -256,10 +301,23 @@ def upload():
             return jsonify({'error': 'No text found'}), 400
         lang = detect_lang(' '.join(paras[:10]))
         cover = extract_cover(data, f.filename)
+        title = f.filename.rsplit('.', 1)[0] if '.' in f.filename else f.filename
+        book_id = str(uuid.uuid4())
+        sb_save(book_id, title, cover, paras, lang)
         return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras),
-                        'cover': cover})
+                        'cover': cover, 'book_id': book_id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/book/<book_id>')
+def get_book(book_id):
+    if not re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', book_id):
+        return jsonify({'error': 'Invalid ID'}), 400
+    book = sb_get(book_id)
+    if not book:
+        return jsonify({'error': 'Book not found'}), 404
+    return jsonify(book)
 
 
 @app.route('/synthesize', methods=['POST'])

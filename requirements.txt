@@ -1,5 +1,6 @@
 flask
 edge-tts
+requests
 
 # Ebook / document format support
 pymupdf
