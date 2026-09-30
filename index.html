@@ -13,31 +13,36 @@
   --serif:'Georgia','Noto Serif SC',serif;--sans:system-ui,-apple-system,sans-serif
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+.gone{display:none!important}
 
 /* ─ Shared ─ */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:800}
-.overlay.gone{display:none}
+.ov-spin{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:800}
 .spin{width:46px;height:46px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.overlay p{font-size:14px;color:var(--muted)}
+.ov-spin p{font-size:14px;color:var(--muted)}
 .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2d2d35;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;color:var(--text);opacity:0;transition:opacity .3s;pointer-events:none;z-index:700;white-space:nowrap}
 .toast.show{opacity:1}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-/* ══ LIBRARY VIEW ══════════════════════════════════════════════════════ */
-#viewLibrary{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10}
-#viewLibrary.gone{display:none}
-.lib-hdr{height:54px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
-.lib-hdr .brand{font-size:20px}
-.lib-hdr h1{font-size:17px;font-weight:600;flex:1}
-.lib-add{display:flex;align-items:center;gap:6px;background:var(--accent);color:#111;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
-.lib-add:active{opacity:.8}
-.lib-refresh{background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 10px;font-size:15px;cursor:pointer;line-height:1}
-.lib-refresh:hover{border-color:var(--accent);color:var(--accent)}
-.lib-body{flex:1;overflow-y:auto;padding:16px}
-.lib-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--muted);text-align:center;padding:32px}
+/* ══ THE SINGLE CANVAS ══════════════════════════════════════ */
+#canvas{position:fixed;inset:0}
+
+/* The one scrollable content area */
+#content{
+  position:absolute;inset:0;
+  overflow-y:auto;
+  background:var(--bg);
+  cursor:default;
+}
+
+/* Padding adapts to mode via body class */
+body.lib  #content{padding:54px 16px 24px}
+body.read #content{padding:76px 24px 108px;cursor:pointer}
+
+/* ── Library items ── */
+.lib-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;gap:14px;color:var(--muted);text-align:center;padding:32px}
 .lib-empty .ico{font-size:52px;opacity:.4}
 .lib-empty p{font-size:14px;line-height:1.6}
 .lib-empty .emp-btn{margin-top:8px;padding:10px 28px;background:var(--accent);color:#111;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
@@ -66,27 +71,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   .book-del{opacity:.65;width:28px;height:28px;font-size:15px}
 }
 
-/* ══ READER VIEW — single canvas ══════════════════════════════════════ */
-#viewReader{position:fixed;inset:0;z-index:10}
-#viewReader.gone{display:none}
-
-/* Full-screen scrollable reading area */
-.reader-area{
-  position:absolute;inset:0;
-  overflow-y:auto;
-  background:var(--bg);
-  cursor:pointer;
-}
-.plist{
-  max-width:700px;margin:0 auto;
-  padding:80px 24px 110px;
-}
-
-/* Paragraph + sentence */
+/* ── Reader paragraphs ── */
+.plist{max-width:700px;margin:0 auto}
 .para{
   padding:12px 4px;margin-bottom:4px;
-  border-left:3px solid transparent;
-  border-radius:4px;
+  border-left:3px solid transparent;border-radius:4px;
   font-family:var(--serif);font-size:17px;line-height:2;color:var(--text);
   transition:background .15s,border-color .15s
 }
@@ -96,23 +85,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .sent{display:inline;border-radius:3px;padding:1px 0;transition:background .15s,box-shadow .15s}
 .sent.hl{background:var(--sent-hl);box-shadow:inset 0 -2px 0 var(--sent-line)}
 
-/* ─ Floating control overlay ─────────────────────────────────────────
-   Two gradient bands (top + bottom) that slide in/out.
-   Pointer-events:none on wrapper, re-enabled on the bands.
-*/
+/* ══ FLOATING OVERLAY ═══════════════════════════════════════ */
 .ctrl-layer{
   position:fixed;inset:0;z-index:50;
   pointer-events:none;
 }
 
+/* Top band */
 .ctrl-top{
   position:absolute;top:0;left:0;right:0;
-  padding:14px 16px 48px;
-  background:linear-gradient(180deg,rgba(17,17,19,.96) 0%,rgba(17,17,19,0) 100%);
-  display:flex;align-items:center;gap:10px;
   pointer-events:all;
   transition:opacity .35s,transform .35s;
 }
+
+/* Lib mode: solid bar */
+body.lib .ctrl-top{
+  background:var(--surf);
+  border-bottom:1px solid var(--border);
+  padding:0 14px;
+  height:54px;
+  display:flex;align-items:center;
+}
+
+/* Reader mode: gradient fade */
+body.read .ctrl-top{
+  background:linear-gradient(180deg,rgba(17,17,19,.96) 0%,rgba(17,17,19,0) 100%);
+  padding:12px 14px 48px;
+  display:flex;align-items:center;
+}
+
+/* Bottom band — reader only */
 .ctrl-bottom{
   position:absolute;bottom:0;left:0;right:0;
   padding:48px 14px 22px;
@@ -122,23 +124,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   transition:opacity .35s,transform .35s;
 }
 
-/* Hidden state */
+/* Hidden state (reader only) */
 .ctrl-layer.hidden .ctrl-top{opacity:0;transform:translateY(-100%);pointer-events:none}
 .ctrl-layer.hidden .ctrl-bottom{opacity:0;transform:translateY(100%);pointer-events:none}
 
-/* Controls styling */
+/* ── Lib top row ── */
+.row-lib{display:flex;align-items:center;gap:10px;width:100%}
+.row-lib .brand{font-size:20px}
+.row-lib h1{font-size:17px;font-weight:600;flex:1}
+.lib-refresh{background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 10px;font-size:15px;cursor:pointer;line-height:1}
+.lib-refresh:hover{border-color:var(--accent);color:var(--accent)}
+.lib-add{display:flex;align-items:center;gap:5px;background:var(--accent);color:#111;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.lib-add:active{opacity:.8}
+
+/* ── Reader top row ── */
+.row-read{display:flex;align-items:center;gap:10px;width:100%}
 .back-btn{background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .back-btn:hover{border-color:var(--accent);color:var(--accent)}
 .book-name-ctrl{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 select{background:rgba(36,36,40,.9);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;flex-shrink:0}
 select:focus{border-color:var(--accent)}
 
+/* ── Playback controls ── */
 .cbtn{width:38px;height:38px;border-radius:50%;background:rgba(28,28,32,.8);border:1px solid var(--border);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
 .cbtn:hover{border-color:var(--accent);color:var(--accent)}
 .cbtn.play{width:46px;height:46px;font-size:18px;background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
 .cbtn.play:hover{opacity:.82}
 .cbtn.play:disabled{opacity:.45;cursor:default}
-
 .prog-wrap{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 .prog-track{height:4px;background:rgba(255,255,255,.15);border-radius:2px;cursor:pointer}
 .prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
@@ -148,7 +160,7 @@ input[type=range]{-webkit-appearance:none;width:68px;height:4px;background:rgba(
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer}
 
 @media(max-width:680px){
-  .plist{padding:72px 16px 96px}
+  body.read #content{padding:68px 16px 94px}
   .para{font-size:16px;line-height:1.9}
   .cbtn{width:44px;height:44px}
   .cbtn.play{width:52px;height:52px;font-size:20px}
@@ -158,39 +170,38 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 }
 </style>
 </head>
-<body>
+<body class="lib">
 
-<div class="overlay gone" id="ov"><div class="spin"></div><p id="ovMsg">处理中…</p></div>
+<div class="ov-spin gone" id="ov"><div class="spin"></div><p id="ovMsg">处理中…</p></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fInput" accept=".pdf,.epub,.txt,.md,.docx,.doc" style="display:none">
 
-<!-- ══ LIBRARY VIEW ══════════════════════════════════════════════════ -->
-<div id="viewLibrary">
-  <div class="lib-hdr">
-    <span class="brand">📚</span>
-    <h1>我的书架</h1>
-    <button class="lib-refresh" onclick="renderLibrary()" title="刷新">↻</button>
-    <button class="lib-add" onclick="fInput.click()">＋ 添加书籍</button>
-  </div>
-  <div class="lib-body" id="libBody"></div>
-</div>
+<!-- ══ THE SINGLE CANVAS ════════════════════════════════════ -->
+<div id="canvas">
 
-<!-- ══ READER VIEW — single canvas ══════════════════════════════════ -->
-<div id="viewReader" class="gone">
+  <!-- One scrollable area — library grid or paragraph list -->
+  <div id="content"></div>
 
-  <!-- The one and only display area: full-screen book text -->
-  <div class="reader-area" id="readerArea">
-    <div class="plist" id="plist"></div>
-  </div>
-
-  <!-- Control overlay — floats above the text, fades in/out -->
+  <!-- Floating overlay — top band changes with mode, bottom only in reader -->
   <div class="ctrl-layer" id="ctrlLayer">
-    <div class="ctrl-top">
-      <button class="back-btn" onclick="goLibrary()">← 书架</button>
-      <div class="book-name-ctrl" id="bookName"></div>
-      <select id="vsel" title="声音"></select>
+
+    <div class="ctrl-top" id="ctrlTop">
+      <!-- Library header row -->
+      <div class="row-lib" id="rowLib">
+        <span class="brand">📚</span>
+        <h1>我的书架</h1>
+        <button class="lib-refresh" onclick="renderLibrary()" title="刷新">↻</button>
+        <button class="lib-add" onclick="fInput.click()">＋ 添加书籍</button>
+      </div>
+      <!-- Reader header row -->
+      <div class="row-read gone" id="rowRead">
+        <button class="back-btn" onclick="goLibrary()">← 书架</button>
+        <div class="book-name-ctrl" id="bookName"></div>
+        <select id="vsel" title="声音"></select>
+      </div>
     </div>
-    <div class="ctrl-bottom">
+
+    <div class="ctrl-bottom gone" id="ctrlBottom">
       <button class="cbtn" onclick="nav(-1)">&#9664;</button>
       <button class="cbtn play" id="btnPlay" onclick="togglePlay()" disabled>&#9654;</button>
       <button class="cbtn" onclick="nav(1)">&#9654;</button>
@@ -207,106 +218,123 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
         <span id="spdLbl">1.0×</span>
       </div>
     </div>
-  </div>
 
+  </div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════
-//  Local cache
+//  Progress / count cache (small — stays in localStorage)
 // ════════════════════════════════════════════════════════
-function progGet(sid) { return +localStorage.getItem('p_'+sid) || 0 }
-function progSet(sid, n) { if (sid) localStorage.setItem('p_'+sid, n) }
-function cntGet(sid)  { return +localStorage.getItem('c_'+sid) || 0 }
-function cntSet(sid, n) { if (sid) localStorage.setItem('c_'+sid, n) }
+function progGet(id){ return +localStorage.getItem('p_'+id)||0 }
+function progSet(id,n){ if(id) localStorage.setItem('p_'+id,n) }
+function cntGet(id){ return +localStorage.getItem('c_'+id)||0 }
+function cntSet(id,n){ if(id) localStorage.setItem('c_'+id,n) }
 
-const BookCache = (() => {
-  const DB='br_cache', VER=1, ST='books'
-  function _open() {
-    return new Promise((res,rej) => {
-      const r = indexedDB.open(DB, VER)
-      r.onupgradeneeded = e => e.target.result.createObjectStore(ST, {keyPath:'id'})
-      r.onsuccess = e => res(e.target.result)
-      r.onerror = () => rej(r.error)
+// ════════════════════════════════════════════════════════
+//  IndexedDB paragraph cache
+// ════════════════════════════════════════════════════════
+const BookCache=(()=>{
+  const DB='br_cache',VER=1,ST='books'
+  function _open(){
+    return new Promise((res,rej)=>{
+      const r=indexedDB.open(DB,VER)
+      r.onupgradeneeded=e=>e.target.result.createObjectStore(ST,{keyPath:'id'})
+      r.onsuccess=e=>res(e.target.result)
+      r.onerror=()=>rej(r.error)
     })
   }
-  async function put(id, title, paragraphs, lang) {
-    const db = await _open()
-    return new Promise((res,rej) => {
-      const tx = db.transaction(ST,'readwrite')
-      tx.objectStore(ST).put({id, title, paragraphs, lang, t: Date.now()})
-      tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error)
+  async function put(id,title,paragraphs,lang){
+    const db=await _open()
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(ST,'readwrite')
+      tx.objectStore(ST).put({id,title,paragraphs,lang,t:Date.now()})
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)
     })
   }
-  async function get(id) {
-    const db = await _open()
-    return new Promise((res,rej) => {
-      const r = db.transaction(ST,'readonly').objectStore(ST).get(id)
-      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error)
+  async function get(id){
+    const db=await _open()
+    return new Promise((res,rej)=>{
+      const r=db.transaction(ST,'readonly').objectStore(ST).get(id)
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)
     })
   }
-  async function del(id) {
-    const db = await _open()
-    return new Promise((res,rej) => {
-      const tx = db.transaction(ST,'readwrite')
+  async function del(id){
+    const db=await _open()
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(ST,'readwrite')
       tx.objectStore(ST).delete(id)
-      tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error)
+      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)
     })
   }
-  return {put, get, del}
+  return{put,get,del}
 })()
 
 // ════════════════════════════════════════════════════════
-//  Control overlay show/hide
+//  Mode management — 'lib' or 'read'
 // ════════════════════════════════════════════════════════
-let _ctrlTimer = 0
+let _mode='lib'
 
-function showCtrl(autoHide=false) {
+function setMode(m){
+  _mode=m
+  document.body.className=m
+  const isRead=m==='read'
+  document.getElementById('rowLib').classList.toggle('gone',isRead)
+  document.getElementById('rowRead').classList.toggle('gone',!isRead)
+  document.getElementById('ctrlBottom').classList.toggle('gone',!isRead)
+  // Always show overlay on mode change; auto-hide only kicks in during playback
+  document.getElementById('ctrlLayer').classList.remove('hidden')
+}
+
+// ════════════════════════════════════════════════════════
+//  Overlay show / hide (reader only)
+// ════════════════════════════════════════════════════════
+let _ctrlTimer=0
+function showCtrl(autoHide=false){
   clearTimeout(_ctrlTimer)
   document.getElementById('ctrlLayer').classList.remove('hidden')
-  if (autoHide) {
-    _ctrlTimer = setTimeout(() => { if (S.playing) hideCtrl() }, 3500)
+  if(autoHide&&_mode==='read'){
+    _ctrlTimer=setTimeout(()=>{ if(S.playing) hideCtrl() },3500)
   }
 }
-function hideCtrl() {
-  document.getElementById('ctrlLayer').classList.add('hidden')
+function hideCtrl(){
+  if(_mode==='read') document.getElementById('ctrlLayer').classList.add('hidden')
 }
 
-// Tap content area → toggle controls
-document.addEventListener('click', e => {
-  if (!document.getElementById('viewReader').classList.contains('gone')) {
-    // Clicks inside ctrl-layer don't toggle
-    if (e.target.closest('.ctrl-layer')) return
-    const layer = document.getElementById('ctrlLayer')
-    if (layer.classList.contains('hidden')) showCtrl()
-    else if (S.playing) hideCtrl()
-  }
+// Tap text area → toggle overlay (reader mode only)
+document.getElementById('content').addEventListener('click',e=>{
+  if(_mode!=='read') return
+  if(e.target.closest('.ctrl-layer')) return
+  const layer=document.getElementById('ctrlLayer')
+  if(layer.classList.contains('hidden')) showCtrl()
+  else if(S.playing) hideCtrl()
 })
 
 // ════════════════════════════════════════════════════════
 //  Library
 // ════════════════════════════════════════════════════════
-const GRADS = [
+const GRADS=[
   ['#1a3860','#2d6ba8'],['#5a1a20','#a83030'],['#1a5a28','#2da842'],
   ['#3a1a60','#7030a8'],['#5a3a10','#a87020'],['#0e4a50','#1a8090'],
 ]
-function coverGrad(t) {
-  const i = (t.charCodeAt(0)||65) % GRADS.length
+function coverGrad(t){
+  const i=(t.charCodeAt(0)||65)%GRADS.length
   return `linear-gradient(150deg,${GRADS[i][0]},${GRADS[i][1]})`
 }
 
-async function renderLibrary() {
-  const body = document.getElementById('libBody')
-  body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:120px;color:var(--muted);font-size:14px">加载中…</div>'
-  let books = []
-  try {
-    const r = await fetch('/books')
-    if (r.ok) { books = await r.json(); localStorage.setItem('lib_cache', JSON.stringify(books)) }
-  } catch {
-    try { books = JSON.parse(localStorage.getItem('lib_cache') || '[]') } catch {}
+async function renderLibrary(){
+  setMode('lib')
+  const ct=document.getElementById('content')
+  ct.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:120px;color:var(--muted);font-size:14px">加载中…</div>'
+  let books=[]
+  try{
+    const r=await fetch('/books')
+    if(r.ok){books=await r.json();localStorage.setItem('lib_cache',JSON.stringify(books))}
+  }catch{
+    try{books=JSON.parse(localStorage.getItem('lib_cache')||'[]')}catch{}
   }
-  if (!books.length) {
-    body.innerHTML = `
+  if(!books.length){
+    ct.innerHTML=`
       <div class="lib-empty">
         <div class="ico">📚</div>
         <p>还没有书籍<br>点击右上角「添加书籍」开始吧</p>
@@ -314,20 +342,20 @@ async function renderLibrary() {
       </div>`
     return
   }
-  body.innerHTML = `<div class="book-grid">${books.map(b => bookCardHtml(b)).join('')}</div>`
+  ct.innerHTML=`<div class="book-grid">${books.map(b=>bookCardHtml(b)).join('')}</div>`
 }
 
-function bookCardHtml(b) {
-  const prog=progGet(b.id), cnt=cntGet(b.id)
-  const pct = cnt>0 ? Math.round(prog/cnt*100) : 0
-  const coverHtml = b.cover
-    ? `<img src="${b.cover}" alt="" loading="lazy">`
-    : `<div class="book-cover-ph" style="background:${coverGrad(b.title)}">
-         <div class="ph-letter">${esc((b.title||'?')[0])}</div>
-       </div>`
-  const progStr = cnt>0 ? (prog>0?`第${prog+1}/${cnt}段 · ${pct}%`:`共${cnt}段`) : (prog>0?`第${prog+1}段`:'未读')
-  const sid = b.id.replace(/[^a-z0-9]/gi,'_')
-  return `
+function bookCardHtml(b){
+  const prog=progGet(b.id),cnt=cntGet(b.id)
+  const pct=cnt>0?Math.round(prog/cnt*100):0
+  const coverHtml=b.cover
+    ?`<img src="${b.cover}" alt="" loading="lazy">`
+    :`<div class="book-cover-ph" style="background:${coverGrad(b.title)}">
+        <div class="ph-letter">${esc((b.title||'?')[0])}</div>
+      </div>`
+  const progStr=cnt>0?(prog>0?`第${prog+1}/${cnt}段 · ${pct}%`:`共${cnt}段`):(prog>0?`第${prog+1}段`:'未读')
+  const sid=b.id.replace(/[^a-z0-9]/gi,'_')
+  return`
     <div class="book-card" id="bc_${sid}" onclick="cardClick('${b.id}')">
       <div class="book-cover">${coverHtml}</div>
       <button class="book-del" onclick="event.stopPropagation();startDel('${b.id}')" title="删除">×</button>
@@ -344,77 +372,63 @@ function bookCardHtml(b) {
     </div>`
 }
 
-function _sid(id) { return id.replace(/[^a-z0-9]/gi,'_') }
-function cardClick(id) {
-  const card = document.getElementById('bc_'+_sid(id))
-  if (card && card.classList.contains('confirming')) { cancelDel(id); return }
+function _sid(id){return id.replace(/[^a-z0-9]/gi,'_')}
+function cardClick(id){
+  const card=document.getElementById('bc_'+_sid(id))
+  if(card&&card.classList.contains('confirming')){cancelDel(id);return}
   openBook(id)
 }
-function startDel(id) {
+function startDel(id){
   document.querySelectorAll('.book-card.confirming').forEach(el=>el.classList.remove('confirming'))
-  const card = document.getElementById('bc_'+_sid(id))
-  if (card) { card.classList.add('confirming'); setTimeout(()=>card.classList.remove('confirming'),4000) }
+  const card=document.getElementById('bc_'+_sid(id))
+  if(card){card.classList.add('confirming');setTimeout(()=>card.classList.remove('confirming'),4000)}
 }
-async function confirmDel(id) {
-  try { await fetch('/book/'+id,{method:'DELETE'}) } catch {}
+async function confirmDel(id){
+  try{await fetch('/book/'+id,{method:'DELETE'})}catch{}
   BookCache.del(id).catch(()=>{})
-  localStorage.removeItem('p_'+id); localStorage.removeItem('c_'+id)
+  localStorage.removeItem('p_'+id);localStorage.removeItem('c_'+id)
   renderLibrary()
 }
-function cancelDel(id) {
-  const card = document.getElementById('bc_'+_sid(id))
-  if (card) card.classList.remove('confirming')
+function cancelDel(id){
+  const card=document.getElementById('bc_'+_sid(id))
+  if(card) card.classList.remove('confirming')
 }
 
-// ─── View switching ───────────────────────────────────────────────────
-function goLibrary() {
+function goLibrary(){
   stopAll()
-  document.getElementById('viewLibrary').classList.remove('gone')
-  document.getElementById('viewReader').classList.add('gone')
   renderLibrary()
 }
 
-async function openBook(serverBookId) {
-  let cached = null
-  try { cached = await BookCache.get(serverBookId) } catch {}
-  if (cached && cached.paragraphs && cached.paragraphs.length) {
-    _startReading(serverBookId, cached.title, cached.paragraphs, cached.lang||'z')
+// ════════════════════════════════════════════════════════
+//  Book loading
+// ════════════════════════════════════════════════════════
+async function openBook(serverBookId){
+  let cached=null
+  try{cached=await BookCache.get(serverBookId)}catch{}
+  if(cached&&cached.paragraphs&&cached.paragraphs.length){
+    _startReading(serverBookId,cached.title,cached.paragraphs,cached.lang||'z')
     return
   }
   showOv('加载书籍…')
-  try {
-    const r = await fetch('/book/'+serverBookId)
-    const d = await r.json()
-    if (!r.ok||d.error) throw new Error(d.error||'获取失败')
+  try{
+    const r=await fetch('/book/'+serverBookId)
+    const d=await r.json()
+    if(!r.ok||d.error) throw new Error(d.error||'获取失败')
     BookCache.put(serverBookId,d.title,d.paragraphs,d.lang).catch(()=>{})
     cntSet(serverBookId,d.paragraphs.length)
     hideOv()
     _startReading(serverBookId,d.title,d.paragraphs,d.lang||'z')
-  } catch(e) { hideOv(); toast('❌ '+e.message,4000) }
+  }catch(e){hideOv();toast('❌ '+e.message,4000)}
 }
 
-function _startReading(serverBookId, title, paragraphs, lang) {
-  S.bookId=serverBookId; S.paras=paragraphs; S.lang=lang; S.paraIdx=-1
-  cntSet(serverBookId,paragraphs.length)
-  document.getElementById('bookName').textContent=title
-  fillVoices(lang)
-  renderList()
-  document.getElementById('btnPlay').disabled=false
-  document.getElementById('viewLibrary').classList.add('gone')
-  document.getElementById('viewReader').classList.remove('gone')
-  showCtrl()
-  playCurrent(progGet(serverBookId))
-}
-
-// ─── File upload ──────────────────────────────────────────────────────
 document.getElementById('fInput').onchange=e=>{
-  if(e.target.files[0]) addBook(e.target.files[0]); e.target.value=''
+  if(e.target.files[0]) addBook(e.target.files[0]);e.target.value=''
 }
-async function addBook(file) {
-  if(!S.ctx) S.ctx=new (window.AudioContext||window.webkitAudioContext)()
+async function addBook(file){
+  if(!S.ctx) S.ctx=new(window.AudioContext||window.webkitAudioContext)()
   showOv('正在解析文件…')
-  const fd=new FormData(); fd.append('file',file)
-  try {
+  const fd=new FormData();fd.append('file',file)
+  try{
     const r=await fetch('/upload',{method:'POST',body:fd})
     const d=await r.json()
     if(d.error) throw new Error(d.error)
@@ -424,20 +438,34 @@ async function addBook(file) {
     cntSet(d.book_id,d.paragraphs.length)
     hideOv()
     _startReading(d.book_id,title,d.paragraphs,d.lang||'z')
-  } catch(e) { hideOv(); toast('❌ '+e.message,4000); renderLibrary() }
+  }catch(e){hideOv();toast('❌ '+e.message,4000);renderLibrary()}
+}
+
+function _startReading(serverBookId,title,paragraphs,lang){
+  S.bookId=serverBookId;S.paras=paragraphs;S.lang=lang;S.paraIdx=-1
+  cntSet(serverBookId,paragraphs.length)
+  document.getElementById('bookName').textContent=title
+  fillVoices(lang)
+  // Render paragraph list into the single content area
+  document.getElementById('content').innerHTML='<div class="plist" id="plist"></div>'
+  setMode('read')
+  document.getElementById('btnPlay').disabled=false
+  renderList()
+  showCtrl()
+  playCurrent(progGet(serverBookId))
 }
 
 // ════════════════════════════════════════════════════════
 //  Player
 // ════════════════════════════════════════════════════════
-const S = {
-  bookId:null, paras:[], lang:'z', paraIdx:-1,
-  playing:false, ctx:null, sources:[],
-  sentTimings:[], pid:0, raf:0,
+const S={
+  bookId:null,paras:[],lang:'z',paraIdx:-1,
+  playing:false,ctx:null,sources:[],
+  sentTimings:[],pid:0,raf:0,
   prefetch:new Map(),
 }
 
-const VOICES = {
+const VOICES={
   zh:[
     {id:'zh-CN-XiaoxiaoNeural',label:'晓晓 (女)'},
     {id:'zh-CN-XiaoyiNeural',  label:'晓依 (女)'},
@@ -451,12 +479,12 @@ const VOICES = {
     {id:'en-GB-SoniaNeural',label:'Sonia GB (F)'},
   ]
 }
-function fillVoices(lang) {
-  const sel=document.getElementById('vsel'), cur=sel.value
+function fillVoices(lang){
+  const sel=document.getElementById('vsel'),cur=sel.value
   sel.innerHTML=''
-  for(const v of (lang==='z'?VOICES.zh:VOICES.en)){
+  for(const v of(lang==='z'?VOICES.zh:VOICES.en)){
     const o=document.createElement('option')
-    o.value=v.id; o.textContent=v.label
+    o.value=v.id;o.textContent=v.label
     if(v.id===cur) o.selected=true
     sel.appendChild(o)
   }
@@ -465,30 +493,31 @@ fillVoices('z')
 document.getElementById('vsel').addEventListener('change',()=>S.prefetch.clear())
 document.getElementById('spd').addEventListener('change',()=>S.prefetch.clear())
 
-function renderList() {
+function renderList(){
   const list=document.getElementById('plist')
+  if(!list) return
   list.innerHTML=''
   S.paras.forEach((txt,i)=>{
     const d=document.createElement('div')
-    d.className='para'; d.id='p'+i
+    d.className='para';d.id='p'+i
     d.innerHTML=`<div class="para-idx">${i+1}</div><div class="para-body">${esc(txt)}</div>`
-    d.onclick=()=>{ stopAll(); playCurrent(i) }
+    d.onclick=()=>{stopAll();playCurrent(i)}
     list.appendChild(d)
   })
   updateProg()
 }
 
-function restoreParaBody(idx) {
+function restoreParaBody(idx){
   if(idx<0||idx>=S.paras.length) return
   const body=document.querySelector('#p'+idx+' .para-body')
   if(body) body.innerHTML=esc(S.paras[idx])
 }
 
-function fetchPara(idx) {
+function fetchPara(idx){
   if(idx<0||idx>=S.paras.length||S.prefetch.has(idx)) return
   const voice=document.getElementById('vsel').value
   const speed=parseFloat(document.getElementById('spd').value)
-  S.prefetch.set(idx, fetch('/synthesize',{
+  S.prefetch.set(idx,fetch('/synthesize',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({text:S.paras[idx],voice,lang:S.lang,speed})
   }).then(async r=>{
@@ -496,95 +525,95 @@ function fetchPara(idx) {
     const timings=JSON.parse(r.headers.get('X-Timings')||'[]')
     const ab=await r.arrayBuffer()
     const buf=await S.ctx.decodeAudioData(ab)
-    return {buf,timings}
+    return{buf,timings}
   }).catch(()=>null))
 }
 
-async function playCurrent(paraIdx, clearCache=true) {
+async function playCurrent(paraIdx,clearCache=true){
   stopAll(clearCache)
   S.paraIdx=paraIdx
   const pid=++S.pid
   progSet(S.bookId,paraIdx)
-  hlPara(paraIdx); updateProg(); setBtn('load')
+  hlPara(paraIdx);updateProg();setBtn('load')
 
-  if(!S.ctx) S.ctx=new (window.AudioContext||window.webkitAudioContext)()
+  if(!S.ctx) S.ctx=new(window.AudioContext||window.webkitAudioContext)()
   if(S.ctx.state==='suspended') S.ctx.resume().catch(()=>{})
 
   if(!S.prefetch.has(paraIdx)) fetchPara(paraIdx)
   let result
-  try { result=await S.prefetch.get(paraIdx) } catch { result=null }
+  try{result=await S.prefetch.get(paraIdx)}catch{result=null}
   S.prefetch.delete(paraIdx)
 
   if(!result){
-    if(S.pid===pid){ toast('⚠ 合成失败，请检查网络'); setBtn('play') }
+    if(S.pid===pid){toast('⚠ 合成失败，请检查网络');setBtn('play')}
     return
   }
   if(S.pid!==pid) return
 
-  const {buf,timings}=result
+  const{buf,timings}=result
   renderWordsInPara(paraIdx,timings)
 
   const start=S.ctx.currentTime+0.05
   const src=S.ctx.createBufferSource()
-  src.buffer=buf; src.connect(S.ctx.destination); src.start(start)
+  src.buffer=buf;src.connect(S.ctx.destination);src.start(start)
   S.sources=[src]
   S.sentTimings=timings.map(t=>({text:t.text,ctxStart:start+t.start,ctxEnd:start+t.end}))
 
-  setBtn('pause'); startRaf(); S.playing=true
-  showCtrl(true)   // briefly show then auto-hide while playing
+  setBtn('pause');startRaf();S.playing=true
+  showCtrl(true)
   fetchPara(paraIdx+1)
 
-  src.onended=()=>{ if(S.pid===pid&&S.playing) onParaEnded() }
+  src.onended=()=>{if(S.pid===pid&&S.playing) onParaEnded()}
 }
 
-function renderWordsInPara(paraIdx, timings) {
+function renderWordsInPara(paraIdx,timings){
   const body=document.querySelector('#p'+paraIdx+' .para-body')
   if(!body) return
   body.innerHTML=timings.length
-    ? timings.map((t,i)=>`<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
-    : esc(S.paras[paraIdx])
+    ?timings.map((t,i)=>`<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
+    :esc(S.paras[paraIdx])
 }
 
-function onParaEnded() {
+function onParaEnded(){
   restoreParaBody(S.paraIdx)
   const next=S.paraIdx+1
   if(next<S.paras.length) playCurrent(next,false)
-  else { stopAll(); toast('朗读完毕') }
+  else{stopAll();toast('朗读完毕')}
 }
 
-function stopAll(clearCache=true) {
+function stopAll(clearCache=true){
   cancelAnimationFrame(S.raf)
   restoreParaBody(S.paraIdx)
-  S.pid++; S.playing=false
+  S.pid++;S.playing=false
   S.sources.forEach(s=>{try{s.stop()}catch(e){}})
-  S.sources=[]; S.sentTimings=[]
+  S.sources=[];S.sentTimings=[]
   if(clearCache) S.prefetch.clear()
-  setBtn('play'); clearHl()
-  showCtrl()  // always show controls when stopped
+  setBtn('play');clearHl()
+  showCtrl()
 }
 
-function togglePlay() {
+function togglePlay(){
   if(S.playing){
     S.ctx&&S.ctx.suspend()
-    S.playing=false; cancelAnimationFrame(S.raf); setBtn('play'); clearHl()
+    S.playing=false;cancelAnimationFrame(S.raf);setBtn('play');clearHl()
     showCtrl()
-  } else if(S.ctx&&S.ctx.state==='suspended'&&S.sources.length>0){
-    S.ctx.resume(); S.playing=true; setBtn('pause'); startRaf()
+  }else if(S.ctx&&S.ctx.state==='suspended'&&S.sources.length>0){
+    S.ctx.resume();S.playing=true;setBtn('pause');startRaf()
     showCtrl(true)
-  } else {
+  }else{
     playCurrent(S.paraIdx>=0?S.paraIdx:0)
   }
 }
 
 function nav(delta){
   const i=S.paraIdx+delta
-  if(i>=0&&i<S.paras.length){ stopAll(); playCurrent(i) }
+  if(i>=0&&i<S.paras.length){stopAll();playCurrent(i)}
 }
 
 function seek(e){
   const pct=e.offsetX/document.getElementById('pgTrack').clientWidth
   const i=Math.max(0,Math.min(S.paras.length-1,Math.floor(pct*S.paras.length)))
-  stopAll(); playCurrent(i)
+  stopAll();playCurrent(i)
 }
 
 let _lastSent=-1
@@ -592,7 +621,7 @@ function startRaf(){
   _lastSent=-1
   const tick=()=>{
     if(!S.playing||!S.ctx) return
-    const now=S.ctx.currentTime, ti=S.sentTimings
+    const now=S.ctx.currentTime,ti=S.sentTimings
     let active=-1
     for(let i=0;i<ti.length;i++) if(now>=ti[i].ctxStart&&now<ti[i].ctxEnd){active=i;break}
     if(active===-1&&ti.length>0&&now>=ti[ti.length-1].ctxStart) active=ti.length-1
@@ -600,7 +629,7 @@ function startRaf(){
       document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl'))
       if(active>=0){
         const el=document.getElementById('s'+active)
-        if(el){ el.classList.add('hl'); el.scrollIntoView({behavior:'smooth',block:'nearest'}) }
+        if(el){el.classList.add('hl');el.scrollIntoView({behavior:'smooth',block:'nearest'})}
       }
       _lastSent=active
     }
@@ -609,11 +638,11 @@ function startRaf(){
   S.raf=requestAnimationFrame(tick)
 }
 
-function clearHl(){ document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl')) }
+function clearHl(){document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl'))}
 function hlPara(idx){
   document.querySelectorAll('.para.active').forEach(el=>el.classList.remove('active'))
   const el=document.getElementById('p'+idx)
-  if(el){ el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'center'}) }
+  if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'center'})}
 }
 function updateProg(){
   const n=S.paras.length,i=S.paraIdx+1
