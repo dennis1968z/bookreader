@@ -99,10 +99,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .book-prog-wrap{margin-top:6px;height:2px;background:var(--border);border-radius:1px}
 .book-prog-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .3s}
 
-/* Mobile: bigger cards */
+/* Delete confirm overlay on card */
+.book-del-ov{
+  display:none;position:absolute;inset:0;z-index:4;
+  background:rgba(20,5,5,.88);border-radius:10px;
+  border:1.5px solid #c0392b;
+  flex-direction:column;align-items:center;justify-content:center;gap:10px
+}
+.book-card.confirming .book-del-ov{display:flex}
+.del-ok{background:#c0392b;color:#fff;border:none;border-radius:7px;padding:8px 22px;font-size:13px;font-weight:700;cursor:pointer;min-width:80px}
+.del-cancel{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;padding:4px 10px}
+.del-lbl{font-size:12px;color:#eee}
+
+/* Mobile: bigger cards, always-visible delete btn */
 @media(max-width:480px){
   .book-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
-  .book-del{opacity:.65}
+  .book-del{opacity:.75;width:28px;height:28px;font-size:15px}
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -248,21 +260,80 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 
 <script>
 // ════════════════════════════════════════════════════════
-//  Library (localStorage)
+//  IndexedDB library (replaces localStorage — no size limit)
 // ════════════════════════════════════════════════════════
-const LIB_KEY = 'br_lib_v1'
+const IDB = (() => {
+  const DB='br_db', VER=1, ST='books'
 
-function libLoad() {
-  try { return JSON.parse(localStorage.getItem(LIB_KEY) || '{}') } catch { return {} }
-}
-function libSave(lib) {
-  try { localStorage.setItem(LIB_KEY, JSON.stringify(lib)) } catch(e) { toast('⚠ 存储空间不足') }
-}
-function libAdd(book)              { const l=libLoad(); l[book.id]=book; libSave(l) }
-function libSetProgress(id, prog)  { const l=libLoad(); if(l[id]){l[id].progress=prog;libSave(l)} }
-function libDelete(id)             { const l=libLoad(); delete l[id]; libSave(l) }
+  function _open() {
+    return new Promise((res,rej) => {
+      const r = indexedDB.open(DB, VER)
+      r.onupgradeneeded = e => e.target.result.createObjectStore(ST, {keyPath:'id'})
+      r.onsuccess = e => res(e.target.result)
+      r.onerror = () => rej(r.error)
+    })
+  }
 
-// Cover placeholder gradients (deterministic by title)
+  async function put(book) {
+    const db = await _open()
+    return new Promise((res,rej) => {
+      const tx = db.transaction(ST,'readwrite')
+      tx.objectStore(ST).put(book)
+      tx.oncomplete = () => res()
+      tx.onerror = () => rej(tx.error)
+    })
+  }
+
+  async function get(id) {
+    const db = await _open()
+    return new Promise((res,rej) => {
+      const r = db.transaction(ST,'readonly').objectStore(ST).get(id)
+      r.onsuccess = () => res(r.result)
+      r.onerror = () => rej(r.error)
+    })
+  }
+
+  async function getAll() {
+    const db = await _open()
+    return new Promise((res,rej) => {
+      const r = db.transaction(ST,'readonly').objectStore(ST).getAll()
+      r.onsuccess = () => res(r.result || [])
+      r.onerror = () => rej(r.error)
+    })
+  }
+
+  async function del(id) {
+    const db = await _open()
+    return new Promise((res,rej) => {
+      const tx = db.transaction(ST,'readwrite')
+      tx.objectStore(ST).delete(id)
+      tx.oncomplete = () => res()
+      tx.onerror = () => rej(tx.error)
+    })
+  }
+
+  async function patch(id, fields) {
+    const b = await get(id)
+    if (b) await put({...b, ...fields})
+  }
+
+  // Migrate old localStorage data (one-time)
+  async function migrate() {
+    try {
+      const old = JSON.parse(localStorage.getItem('br_lib_v1') || '{}')
+      const ids = Object.keys(old)
+      if (!ids.length) return
+      for (const id of ids) await put(old[id])
+      localStorage.removeItem('br_lib_v1')
+    } catch(e) {}
+  }
+
+  return {put, get, getAll, del, patch, migrate}
+})()
+
+// ════════════════════════════════════════════════════════
+//  Library rendering
+// ════════════════════════════════════════════════════════
 const GRADS = [
   ['#1a3860','#2d6ba8'],['#5a1a20','#a83030'],['#1a5a28','#2da842'],
   ['#3a1a60','#7030a8'],['#5a3a10','#a87020'],['#0e4a50','#1a8090'],
@@ -272,11 +343,10 @@ function coverGrad(title) {
   return `linear-gradient(150deg,${GRADS[i][0]},${GRADS[i][1]})`
 }
 
-// ─── Render library ───────────────────────────────────────────────────
-function renderLibrary() {
-  const lib = libLoad()
-  const books = Object.values(lib).sort((a,b) => b.addedAt - a.addedAt)
+async function renderLibrary() {
   const body = document.getElementById('libBody')
+  let books = []
+  try { books = (await IDB.getAll()).sort((a,b) => b.addedAt - a.addedAt) } catch(e) {}
 
   if (!books.length) {
     body.innerHTML = `
@@ -287,7 +357,6 @@ function renderLibrary() {
       </div>`
     return
   }
-
   body.innerHTML = `<div class="book-grid">${books.map(b => bookCardHtml(b)).join('')}</div>`
 }
 
@@ -299,10 +368,16 @@ function bookCardHtml(b) {
          <div class="ph-letter">${esc((b.title||'?')[0])}</div>
        </div>`
   const prog = b.progress > 0 ? `第 ${b.progress+1} / ${b.paragraphs.length} 段` : `共 ${b.paragraphs.length} 段`
+  const sid = b.id.replace(/[^a-z0-9]/gi,'_')
   return `
-    <div class="book-card" onclick="openBook('${b.id}')">
+    <div class="book-card" id="bc_${sid}" onclick="cardClick('${b.id}')">
       <div class="book-cover">${coverHtml}</div>
-      <button class="book-del" onclick="event.stopPropagation();deleteBook('${b.id}')" title="删除">×</button>
+      <button class="book-del" onclick="event.stopPropagation();startDel('${b.id}')" title="删除">×</button>
+      <div class="book-del-ov" onclick="event.stopPropagation()">
+        <div class="del-lbl">确认删除？</div>
+        <button class="del-ok" onclick="confirmDel('${b.id}')">删除</button>
+        <button class="del-cancel" onclick="cancelDel('${b.id}')">取消</button>
+      </div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
         <div class="book-meta">${prog}${pct>0?' · '+pct+'%':''}</div>
@@ -311,10 +386,31 @@ function bookCardHtml(b) {
     </div>`
 }
 
-function deleteBook(id) {
-  if (!confirm('删除这本书？')) return
-  libDelete(id)
+function _sid(id) { return id.replace(/[^a-z0-9]/gi,'_') }
+
+function cardClick(id) {
+  const card = document.getElementById('bc_'+_sid(id))
+  if (card && card.classList.contains('confirming')) { cancelDel(id); return }
+  openBook(id)
+}
+
+function startDel(id) {
+  document.querySelectorAll('.book-card.confirming').forEach(el => el.classList.remove('confirming'))
+  const card = document.getElementById('bc_'+_sid(id))
+  if (card) {
+    card.classList.add('confirming')
+    setTimeout(() => card.classList.remove('confirming'), 4000)
+  }
+}
+
+async function confirmDel(id) {
+  await IDB.del(id)
   renderLibrary()
+}
+
+function cancelDel(id) {
+  const card = document.getElementById('bc_'+_sid(id))
+  if (card) card.classList.remove('confirming')
 }
 
 // ─── View switching ───────────────────────────────────────────────────
@@ -325,9 +421,9 @@ function goLibrary() {
   renderLibrary()
 }
 
-function openBook(id) {
-  const lib = libLoad()
-  const book = lib[id]
+async function openBook(id) {
+  let book
+  try { book = await IDB.get(id) } catch(e) { toast('❌ 无法读取书籍'); return }
   if (!book) return
 
   S.bookId = id
@@ -372,7 +468,7 @@ async function addBook(file) {
       addedAt: Date.now(),
       progress: 0,
     }
-    libAdd(book)
+    await IDB.put(book)
     hideOv()
     openBook(id)
   } catch(e) {
@@ -459,8 +555,8 @@ async function playCurrent(paraIdx, clearCache=true) {
   S.paraIdx = paraIdx
   const pid = ++S.pid
 
-  // Save progress
-  libSetProgress(S.bookId, paraIdx)
+  // Save progress (fire-and-forget)
+  IDB.patch(S.bookId, {progress: paraIdx}).catch(() => {})
 
   hlPara(paraIdx); updateProg(); setBtn('load')
   document.getElementById('now').innerHTML='<div class="hint">⏳ 合成中…</div>'
@@ -619,8 +715,8 @@ document.addEventListener('keydown',e=>{
   else if(e.code==='ArrowLeft'||e.code==='ArrowUp'){e.preventDefault();nav(-1)}
 })
 
-// ─── Init: show library ───────────────────────────────────────────────
-renderLibrary()
+// ─── Init: migrate old data then show library ─────────────────────────
+IDB.migrate().then(() => renderLibrary())
 </script>
 </body>
 </html>
