@@ -52,6 +52,34 @@ def sb_get(book_id: str):
     except Exception:
         return None
 
+def sb_list() -> list:
+    """Return all books metadata (no paragraphs) newest first."""
+    if not _sb_ok():
+        return []
+    try:
+        r = _http.get(
+            f'{_SB_URL}/rest/v1/books?select=id,title,cover,lang,created_at&order=created_at.desc',
+            headers=_sb_hdrs(),
+            timeout=10,
+        )
+        data = r.json()
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def sb_delete(book_id: str) -> bool:
+    if not _sb_ok():
+        return False
+    try:
+        r = _http.delete(
+            f'{_SB_URL}/rest/v1/books?id=eq.{book_id}',
+            headers=_sb_hdrs(),
+            timeout=10,
+        )
+        return r.status_code in (200, 204)
+    except Exception:
+        return False
+
 
 # ─── Language detection ───────────────────────────────────────────────────────
 
@@ -310,6 +338,10 @@ def upload():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/books')
+def list_books():
+    return jsonify(sb_list())
+
 @app.route('/book/<book_id>')
 def get_book(book_id):
     if not re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', book_id):
@@ -318,6 +350,13 @@ def get_book(book_id):
     if not book:
         return jsonify({'error': 'Book not found'}), 404
     return jsonify(book)
+
+@app.route('/book/<book_id>', methods=['DELETE'])
+def delete_book(book_id):
+    if not re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', book_id):
+        return jsonify({'error': 'Invalid ID'}), 400
+    sb_delete(book_id)
+    return jsonify({'ok': True})
 
 
 @app.route('/synthesize', methods=['POST'])

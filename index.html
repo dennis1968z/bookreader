@@ -15,7 +15,7 @@
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
 
-/* ─ Shared overlay ─ */
+/* ─ Shared ─ */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:500}
 .overlay.gone{display:none}
 .spin{width:46px;height:46px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .75s linear infinite}
@@ -26,11 +26,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
-/* ══════════════════════════════════════════════════════════
-   LIBRARY VIEW
-══════════════════════════════════════════════════════════ */
+/* ══ LIBRARY VIEW ══════════════════════════════════════════════════════ */
 #viewLibrary{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10}
 #viewLibrary.gone{display:none}
 
@@ -46,57 +43,39 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer
 }
 .lib-add:active{opacity:.8}
-.lib-link{
+.lib-refresh{
   background:var(--surf2);border:1px solid var(--border);color:var(--muted);
   border-radius:8px;padding:7px 10px;font-size:15px;cursor:pointer;line-height:1
 }
-.lib-link:hover{border-color:var(--accent);color:var(--accent)}
+.lib-refresh:hover{border-color:var(--accent);color:var(--accent)}
 
 .lib-body{flex:1;overflow-y:auto;padding:16px}
 
-/* Empty state */
-.lib-empty{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;gap:14px;color:var(--muted);text-align:center;padding:32px
-}
+.lib-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--muted);text-align:center;padding:32px}
 .lib-empty .ico{font-size:52px;opacity:.4}
 .lib-empty p{font-size:14px;line-height:1.6}
-.lib-empty .emp-btn{
-  margin-top:8px;padding:10px 28px;background:var(--accent);color:#111;
-  border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer
-}
+.lib-empty .emp-btn{margin-top:8px;padding:10px 28px;background:var(--accent);color:#111;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
 
-/* Book grid */
 .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
 
-.book-card{
-  background:var(--surf);border:1px solid var(--border);border-radius:10px;
-  overflow:hidden;cursor:pointer;position:relative;
-  transition:transform .15s,border-color .15s
-}
+.book-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;transition:transform .15s,border-color .15s}
 .book-card:active{transform:scale(.97)}
 @media(hover:hover){.book-card:hover{transform:translateY(-3px);border-color:var(--accent)}}
 
-.book-cover{
-  width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;
-  display:flex;align-items:center;justify-content:center
-}
+.book-cover{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
 .book-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.book-cover-ph{
-  width:100%;height:100%;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:8px;padding:12px
-}
-.book-cover-ph .ph-ico{font-size:28px;opacity:.7}
+.book-cover-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px}
 .book-cover-ph .ph-letter{font-size:32px;font-weight:700;color:#fff;opacity:.8;line-height:1}
 
-.book-del{
-  position:absolute;top:6px;right:6px;
-  width:22px;height:22px;border-radius:50%;
-  background:rgba(0,0,0,.55);border:none;color:#fff;
-  font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .15s
-}
+.book-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
 .book-card:hover .book-del{opacity:1}
+
+/* Delete confirm overlay */
+.book-del-ov{display:none;position:absolute;inset:0;z-index:4;background:rgba(20,5,5,.88);border-radius:10px;border:1.5px solid #c0392b;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.book-card.confirming .book-del-ov{display:flex}
+.del-ok{background:#c0392b;color:#fff;border:none;border-radius:7px;padding:8px 22px;font-size:13px;font-weight:700;cursor:pointer}
+.del-cancel{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;padding:4px 10px}
+.del-lbl{font-size:12px;color:#eee}
 
 .book-info{padding:8px 10px 10px}
 .book-title{font-size:12px;line-height:1.4;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:34px}
@@ -104,71 +83,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .book-prog-wrap{margin-top:6px;height:2px;background:var(--border);border-radius:1px}
 .book-prog-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .3s}
 
-/* Share button on card cover */
-.book-share{
-  position:absolute;top:6px;left:6px;
-  width:22px;height:22px;border-radius:50%;
-  background:rgba(0,0,0,.55);border:none;color:#8cf;
-  font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .15s
-}
-.book-card:hover .book-share{opacity:1}
-@media(max-width:480px){.book-share{opacity:.65;width:28px;height:28px;font-size:13px}}
-
-/* Add-by-link modal */
-.link-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:600;padding:20px}
-.link-ov.gone{display:none}
-.link-panel{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:24px 20px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
-.link-panel .lp-ttl{font-size:16px;font-weight:600}
-.link-panel .lp-hint{font-size:12px;color:var(--muted);line-height:1.5}
-.link-panel input{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 14px;font-size:14px;outline:none;width:100%}
-.link-panel input:focus{border-color:var(--accent)}
-.lp-btns{display:flex;gap:10px;justify-content:flex-end}
-.lp-cancel{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:14px;cursor:pointer}
-.lp-ok{background:var(--accent);border:none;color:#111;border-radius:8px;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer}
-
-/* Delete confirm overlay on card */
-.book-del-ov{
-  display:none;position:absolute;inset:0;z-index:4;
-  background:rgba(20,5,5,.88);border-radius:10px;
-  border:1.5px solid #c0392b;
-  flex-direction:column;align-items:center;justify-content:center;gap:10px
-}
-.book-card.confirming .book-del-ov{display:flex}
-.del-ok{background:#c0392b;color:#fff;border:none;border-radius:7px;padding:8px 22px;font-size:13px;font-weight:700;cursor:pointer;min-width:80px}
-.del-cancel{background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;padding:4px 10px}
-.del-lbl{font-size:12px;color:#eee}
-
-/* Mobile: bigger cards, always-visible delete btn */
 @media(max-width:480px){
   .book-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
-  .book-del{opacity:.75;width:28px;height:28px;font-size:15px}
+  .book-del{opacity:.65;width:28px;height:28px;font-size:15px}
 }
 
-/* ══════════════════════════════════════════════════════════
-   READER VIEW
-══════════════════════════════════════════════════════════ */
+/* ══ READER VIEW ═══════════════════════════════════════════════════════ */
 #viewReader{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10}
 #viewReader.gone{display:none}
 
-/* Header */
-.hdr{
-  position:fixed;top:0;left:0;right:0;height:var(--hdr-h);
-  background:var(--surf);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:8px;padding:0 12px;z-index:100
-}
-.back-btn{
-  background:none;border:1px solid var(--border);color:var(--muted);
-  border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;
-  white-space:nowrap;flex-shrink:0
-}
+.hdr{position:fixed;top:0;left:0;right:0;height:var(--hdr-h);background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:100}
+.back-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .back-btn:hover{border-color:var(--accent);color:var(--accent)}
 .hdr .book-name{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .hdr .hcontrols{display:flex;align-items:center;gap:6px;flex-shrink:0}
 select,.hbtn{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;outline:none}
 select:focus,.hbtn:focus,.hbtn:hover{border-color:var(--accent)}
 
-/* Main split layout */
 .main{display:flex;height:100vh;padding-top:var(--hdr-h);padding-bottom:calc(var(--bar-h) + var(--banner-h))}
 .plist-wrap{flex:1 1 55%;min-width:0;overflow-y:auto;padding:14px 16px;border-right:1px solid var(--border)}
 .para{padding:10px 12px;margin-bottom:6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;font-family:var(--serif);font-size:15px;line-height:1.8;color:var(--text);transition:background .12s,border-color .12s}
@@ -176,7 +107,6 @@ select:focus,.hbtn:focus,.hbtn:hover{border-color:var(--accent)}
 .para.active{background:var(--play-bg);border-left-color:var(--accent)}
 .para-idx{font-size:11px;color:var(--muted);font-family:var(--sans);margin-bottom:3px;user-select:none}
 
-/* Right: now playing */
 .now-wrap{flex:0 0 42%;min-width:260px;max-width:580px;display:flex;flex-direction:column;overflow:hidden}
 .now-hdr{padding:12px 18px 8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
@@ -187,13 +117,11 @@ select:focus,.hbtn:focus,.hbtn:hover{border-color:var(--accent)}
 .sent.hl{background:var(--sent-hl);box-shadow:inset 0 -2px 0 var(--sent-line)}
 .hint{color:var(--muted);font-size:14px;font-style:italic;display:flex;align-items:center;justify-content:center;height:100%;text-align:center;line-height:1.6}
 
-/* Mobile banner */
 .now-banner{display:none;position:fixed;left:0;right:0;bottom:var(--bar-h);background:var(--play-bg);border-top:2px solid var(--accent);padding:10px 16px;z-index:90;min-height:44px;max-height:110px;overflow:hidden}
 .now-banner .nb-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .now-banner .nb-text{font-family:var(--serif);font-size:16px;line-height:1.55;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .now-banner .nb-text .sent.hl{background:var(--sent-hl);box-shadow:inset 0 -2px 0 var(--sent-line)}
 
-/* Control bar */
 .ctrlbar{position:fixed;bottom:0;left:0;right:0;height:var(--bar-h);background:var(--surf);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;z-index:100}
 .cbtn{width:36px;height:36px;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
 .cbtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -208,7 +136,6 @@ select:focus,.hbtn:focus,.hbtn:hover{border-color:var(--accent)}
 input[type=range]{-webkit-appearance:none;width:72px;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer}
 
-/* ─ Mobile reader ─ */
 @media(max-width:680px){
   :root{--bar-h:68px;--banner-h:76px}
   .now-wrap{display:none}
@@ -227,7 +154,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 </head>
 <body>
 
-<!-- Shared: loading overlay + toast -->
 <div class="overlay gone" id="ov"><div class="spin"></div><p id="ovMsg">处理中…</p></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fInput" accept=".pdf,.epub,.txt,.md,.docx,.doc" style="display:none">
@@ -237,8 +163,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="lib-hdr">
     <span class="brand">📚</span>
     <h1>我的书架</h1>
-    <button class="lib-link" onclick="promptAddByLink()" title="通过链接添加">🔗</button>
-    <button class="lib-add" onclick="fInput.click()">＋ 添加</button>
+    <button class="lib-refresh" onclick="renderLibrary()" title="刷新">↻</button>
+    <button class="lib-add" onclick="fInput.click()">＋ 添加书籍</button>
   </div>
   <div class="lib-body" id="libBody"></div>
 </div>
@@ -268,7 +194,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="nb-text" id="nbText"></div>
   </div>
 
-  <div class="ctrlbar" id="ctrlbar">
+  <div class="ctrlbar">
     <button class="cbtn" onclick="nav(-1)">&#9664;</button>
     <button class="cbtn play" id="btnPlay" onclick="togglePlay()" disabled>&#9654;</button>
     <button class="cbtn" onclick="nav(1)">&#9654;</button>
@@ -287,27 +213,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   </div>
 </div>
 
-<!-- Add-by-link modal -->
-<div class="link-ov gone" id="linkOv" onclick="closeLinkOv()">
-  <div class="link-panel" onclick="event.stopPropagation()">
-    <div class="lp-ttl">通过链接添加书籍</div>
-    <div class="lp-hint">在其他设备复制分享链接，粘贴到下方即可添加到本设备书架</div>
-    <input type="url" id="linkInput" placeholder="粘贴分享链接…" autocomplete="off" spellcheck="false"
-      onkeydown="if(event.key==='Enter')doAddByLink()">
-    <div class="lp-btns">
-      <button class="lp-cancel" onclick="closeLinkOv()">取消</button>
-      <button class="lp-ok" onclick="doAddByLink()">添加到书架</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ════════════════════════════════════════════════════════
-//  IndexedDB library (replaces localStorage — no size limit)
+//  Local cache: progress in localStorage, paragraphs in IndexedDB
 // ════════════════════════════════════════════════════════
-const IDB = (() => {
-  const DB='br_db', VER=1, ST='books'
+function progGet(sid) { return +localStorage.getItem('p_'+sid) || 0 }
+function progSet(sid, n) { if (sid) localStorage.setItem('p_'+sid, n) }
+function cntGet(sid)  { return +localStorage.getItem('c_'+sid) || 0 }
+function cntSet(sid, n) { if (sid) localStorage.setItem('c_'+sid, n) }
 
+const BookCache = (() => {
+  const DB='br_cache', VER=1, ST='books'
   function _open() {
     return new Promise((res,rej) => {
       const r = indexedDB.open(DB, VER)
@@ -316,81 +232,57 @@ const IDB = (() => {
       r.onerror = () => rej(r.error)
     })
   }
-
-  async function put(book) {
+  async function put(id, title, paragraphs, lang) {
     const db = await _open()
     return new Promise((res,rej) => {
       const tx = db.transaction(ST,'readwrite')
-      tx.objectStore(ST).put(book)
-      tx.oncomplete = () => res()
-      tx.onerror = () => rej(tx.error)
+      tx.objectStore(ST).put({id, title, paragraphs, lang, t: Date.now()})
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error)
     })
   }
-
   async function get(id) {
     const db = await _open()
     return new Promise((res,rej) => {
       const r = db.transaction(ST,'readonly').objectStore(ST).get(id)
-      r.onsuccess = () => res(r.result)
-      r.onerror = () => rej(r.error)
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error)
     })
   }
-
-  async function getAll() {
-    const db = await _open()
-    return new Promise((res,rej) => {
-      const r = db.transaction(ST,'readonly').objectStore(ST).getAll()
-      r.onsuccess = () => res(r.result || [])
-      r.onerror = () => rej(r.error)
-    })
-  }
-
   async function del(id) {
     const db = await _open()
     return new Promise((res,rej) => {
       const tx = db.transaction(ST,'readwrite')
       tx.objectStore(ST).delete(id)
-      tx.oncomplete = () => res()
-      tx.onerror = () => rej(tx.error)
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error)
     })
   }
-
-  async function patch(id, fields) {
-    const b = await get(id)
-    if (b) await put({...b, ...fields})
-  }
-
-  // Migrate old localStorage data (one-time)
-  async function migrate() {
-    try {
-      const old = JSON.parse(localStorage.getItem('br_lib_v1') || '{}')
-      const ids = Object.keys(old)
-      if (!ids.length) return
-      for (const id of ids) await put(old[id])
-      localStorage.removeItem('br_lib_v1')
-    } catch(e) {}
-  }
-
-  return {put, get, getAll, del, patch, migrate}
+  return {put, get, del}
 })()
 
 // ════════════════════════════════════════════════════════
-//  Library rendering
+//  Library — always reads from server (Supabase via Flask)
 // ════════════════════════════════════════════════════════
 const GRADS = [
   ['#1a3860','#2d6ba8'],['#5a1a20','#a83030'],['#1a5a28','#2da842'],
   ['#3a1a60','#7030a8'],['#5a3a10','#a87020'],['#0e4a50','#1a8090'],
 ]
-function coverGrad(title) {
-  const i = (title.charCodeAt(0)||65) % GRADS.length
+function coverGrad(t) {
+  const i = (t.charCodeAt(0)||65) % GRADS.length
   return `linear-gradient(150deg,${GRADS[i][0]},${GRADS[i][1]})`
 }
 
 async function renderLibrary() {
   const body = document.getElementById('libBody')
+  body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:120px;color:var(--muted);font-size:14px">加载中…</div>'
   let books = []
-  try { books = (await IDB.getAll()).sort((a,b) => b.addedAt - a.addedAt) } catch(e) {}
-
+  try {
+    const r = await fetch('/books')
+    if (r.ok) {
+      books = await r.json()
+      localStorage.setItem('lib_cache', JSON.stringify(books))
+    }
+  } catch {
+    try { books = JSON.parse(localStorage.getItem('lib_cache') || '[]') } catch {}
+  }
   if (!books.length) {
     body.innerHTML = `
       <div class="lib-empty">
@@ -404,22 +296,22 @@ async function renderLibrary() {
 }
 
 function bookCardHtml(b) {
-  const pct = b.paragraphs.length > 0 ? Math.round(b.progress / b.paragraphs.length * 100) : 0
+  const prog = progGet(b.id)
+  const cnt  = cntGet(b.id)
+  const pct  = cnt > 0 ? Math.round(prog / cnt * 100) : 0
   const coverHtml = b.cover
     ? `<img src="${b.cover}" alt="" loading="lazy">`
     : `<div class="book-cover-ph" style="background:${coverGrad(b.title)}">
          <div class="ph-letter">${esc((b.title||'?')[0])}</div>
        </div>`
-  const prog = b.progress > 0 ? `第 ${b.progress+1} / ${b.paragraphs.length} 段` : `共 ${b.paragraphs.length} 段`
+  const progStr = cnt > 0
+    ? (prog > 0 ? `第 ${prog+1}/${cnt} 段 · ${pct}%` : `共 ${cnt} 段`)
+    : (prog > 0 ? `第 ${prog+1} 段` : '未读')
   const sid = b.id.replace(/[^a-z0-9]/gi,'_')
-  const shareBtn = b.serverBookId
-    ? `<button class="book-share" onclick="event.stopPropagation();shareBook('${b.id}')" title="复制分享链接">⬆</button>`
-    : ''
   return `
     <div class="book-card" id="bc_${sid}" onclick="cardClick('${b.id}')">
       <div class="book-cover">${coverHtml}</div>
       <button class="book-del" onclick="event.stopPropagation();startDel('${b.id}')" title="删除">×</button>
-      ${shareBtn}
       <div class="book-del-ov" onclick="event.stopPropagation()">
         <div class="del-lbl">确认删除？</div>
         <button class="del-ok" onclick="confirmDel('${b.id}')">删除</button>
@@ -427,7 +319,7 @@ function bookCardHtml(b) {
       </div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
-        <div class="book-meta">${prog}${pct>0?' · '+pct+'%':''}</div>
+        <div class="book-meta">${progStr}</div>
         <div class="book-prog-wrap"><div class="book-prog-fill" style="width:${pct}%"></div></div>
       </div>
     </div>`
@@ -444,14 +336,14 @@ function cardClick(id) {
 function startDel(id) {
   document.querySelectorAll('.book-card.confirming').forEach(el => el.classList.remove('confirming'))
   const card = document.getElementById('bc_'+_sid(id))
-  if (card) {
-    card.classList.add('confirming')
-    setTimeout(() => card.classList.remove('confirming'), 4000)
-  }
+  if (card) { card.classList.add('confirming'); setTimeout(() => card.classList.remove('confirming'), 4000) }
 }
 
 async function confirmDel(id) {
-  await IDB.del(id)
+  try { await fetch('/book/'+id, {method:'DELETE'}) } catch {}
+  BookCache.del(id).catch(() => {})
+  localStorage.removeItem('p_'+id)
+  localStorage.removeItem('c_'+id)
   renderLibrary()
 }
 
@@ -468,27 +360,44 @@ function goLibrary() {
   renderLibrary()
 }
 
-async function openBook(id) {
-  let book
-  try { book = await IDB.get(id) } catch(e) { toast('❌ 无法读取书籍'); return }
-  if (!book) return
+async function openBook(serverBookId) {
+  // Try local cache first (instant)
+  let cached = null
+  try { cached = await BookCache.get(serverBookId) } catch {}
+  if (cached && cached.paragraphs && cached.paragraphs.length) {
+    _startReading(serverBookId, cached.title, cached.paragraphs, cached.lang || 'z')
+    return
+  }
+  // Fetch full book from server
+  showOv('加载书籍…')
+  try {
+    const r = await fetch('/book/' + serverBookId)
+    const d = await r.json()
+    if (!r.ok || d.error) throw new Error(d.error || '获取失败')
+    BookCache.put(serverBookId, d.title, d.paragraphs, d.lang).catch(() => {})
+    cntSet(serverBookId, d.paragraphs.length)
+    hideOv()
+    _startReading(serverBookId, d.title, d.paragraphs, d.lang || 'z')
+  } catch(e) {
+    hideOv()
+    toast('❌ ' + e.message, 4000)
+  }
+}
 
-  S.bookId = id
-  S.paras  = book.paragraphs
-  S.lang   = book.lang
+function _startReading(serverBookId, title, paragraphs, lang) {
+  S.bookId  = serverBookId
+  S.paras   = paragraphs
+  S.lang    = lang
   S.paraIdx = -1
-
-  document.getElementById('bookName').textContent = book.title
-  fillVoices(book.lang)
+  cntSet(serverBookId, paragraphs.length)
+  document.getElementById('bookName').textContent = title
+  fillVoices(lang)
   renderList()
   document.getElementById('btnPlay').disabled = false
   showBanner(false)
-
   document.getElementById('viewLibrary').classList.add('gone')
   document.getElementById('viewReader').classList.remove('gone')
-
-  const startPara = book.progress || 0
-  playCurrent(startPara)
+  playCurrent(progGet(serverBookId))
 }
 
 // ─── File upload ──────────────────────────────────────────────────────
@@ -505,87 +414,12 @@ async function addBook(file) {
     const r = await fetch('/upload', {method:'POST', body:fd})
     const d = await r.json()
     if (d.error) throw new Error(d.error)
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2,5)
+    if (!d.book_id) throw new Error('云端存储未配置')
     const title = file.name.replace(/\.[^.]+$/, '')
-    const book = {
-      id, title,
-      serverBookId: d.book_id || null,
-      cover: d.cover || null,
-      paragraphs: d.paragraphs,
-      lang: d.lang || 'z',
-      addedAt: Date.now(),
-      progress: 0,
-    }
-    await IDB.put(book)
+    BookCache.put(d.book_id, title, d.paragraphs, d.lang).catch(() => {})
+    cntSet(d.book_id, d.paragraphs.length)
     hideOv()
-    openBook(id)
-  } catch(e) {
-    hideOv()
-    toast('❌ ' + e.message, 4000)
-    renderLibrary()
-  }
-}
-
-// ─── Share / add-by-link ──────────────────────────────────────────────
-async function shareBook(id) {
-  const book = await IDB.get(id)
-  if (!book || !book.serverBookId) { toast('此书无云端链接'); return }
-  const url = location.origin + location.pathname + '?b=' + book.serverBookId
-  try {
-    await navigator.clipboard.writeText(url)
-    toast('链接已复制 ✓ 可在其他设备粘贴添加', 3500)
-  } catch {
-    prompt('复制此链接：', url)
-  }
-}
-
-function promptAddByLink() {
-  document.getElementById('linkInput').value = ''
-  document.getElementById('linkOv').classList.remove('gone')
-  setTimeout(() => document.getElementById('linkInput').focus(), 80)
-}
-
-function closeLinkOv() {
-  document.getElementById('linkOv').classList.add('gone')
-}
-
-async function doAddByLink() {
-  const raw = document.getElementById('linkInput').value.trim()
-  if (!raw) return
-  let bookId = null
-  try { bookId = new URL(raw).searchParams.get('b') } catch {}
-  if (!bookId) {
-    const m = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
-    bookId = m ? m[0] : null
-  }
-  if (!bookId) { toast('❌ 无效链接'); return }
-
-  const existing = (await IDB.getAll()).find(b => b.serverBookId === bookId)
-  if (existing) { closeLinkOv(); toast('书架已有这本书'); openBook(existing.id); return }
-
-  closeLinkOv()
-  await fetchAndAddBook(bookId)
-}
-
-async function fetchAndAddBook(bookId) {
-  showOv('获取书籍中…')
-  try {
-    const r = await fetch('/book/' + bookId)
-    const d = await r.json()
-    if (!r.ok || d.error) throw new Error(d.error || '获取失败')
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2,5)
-    const book = {
-      id, serverBookId: bookId,
-      title: d.title || '未知书名',
-      cover: d.cover || null,
-      paragraphs: d.paragraphs || [],
-      lang: d.lang || 'z',
-      addedAt: Date.now(),
-      progress: 0,
-    }
-    await IDB.put(book)
-    hideOv()
-    openBook(id)
+    _startReading(d.book_id, title, d.paragraphs, d.lang || 'z')
   } catch(e) {
     hideOv()
     toast('❌ ' + e.message, 4000)
@@ -622,16 +456,16 @@ const VOICES = {
 function fillVoices(lang) {
   const sel = document.getElementById('vsel'), cur = sel.value
   sel.innerHTML = ''
-  for (const v of (lang==='z'?VOICES.zh:VOICES.en)) {
+  for (const v of (lang==='z' ? VOICES.zh : VOICES.en)) {
     const o = document.createElement('option')
     o.value=v.id; o.textContent=v.label
-    if(v.id===cur) o.selected=true
+    if (v.id===cur) o.selected=true
     sel.appendChild(o)
   }
 }
 fillVoices('z')
-document.getElementById('vsel').addEventListener('change', ()=>S.prefetch.clear())
-document.getElementById('spd').addEventListener('change', ()=>S.prefetch.clear())
+document.getElementById('vsel').addEventListener('change', () => S.prefetch.clear())
+document.getElementById('spd').addEventListener('change',  () => S.prefetch.clear())
 
 // ─── Paragraph list ───────────────────────────────────────────────────
 function renderList() {
@@ -654,14 +488,14 @@ function fetchPara(idx) {
   const speed=parseFloat(document.getElementById('spd').value)
   S.prefetch.set(idx, fetch('/synthesize',{
     method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:S.paras[idx],voice,lang:S.lang,speed})
-  }).then(async r=>{
-    if(!r.ok) throw new Error('HTTP '+r.status)
-    const timings=JSON.parse(r.headers.get('X-Timings')||'[]')
-    const ab=await r.arrayBuffer()
-    const buf=await S.ctx.decodeAudioData(ab)
-    return {buf,timings}
-  }).catch(()=>null))
+    body: JSON.stringify({text:S.paras[idx], voice, lang:S.lang, speed})
+  }).then(async r => {
+    if (!r.ok) throw new Error('HTTP '+r.status)
+    const timings = JSON.parse(r.headers.get('X-Timings')||'[]')
+    const ab = await r.arrayBuffer()
+    const buf = await S.ctx.decodeAudioData(ab)
+    return {buf, timings}
+  }).catch(() => null))
 }
 
 // ─── Play ─────────────────────────────────────────────────────────────
@@ -670,68 +504,67 @@ async function playCurrent(paraIdx, clearCache=true) {
   S.paraIdx = paraIdx
   const pid = ++S.pid
 
-  // Save progress (fire-and-forget)
-  IDB.patch(S.bookId, {progress: paraIdx}).catch(() => {})
+  progSet(S.bookId, paraIdx)
 
   hlPara(paraIdx); updateProg(); setBtn('load')
   document.getElementById('now').innerHTML='<div class="hint">⏳ 合成中…</div>'
   setBannerText('⏳ 合成中…', false)
 
-  if(!S.ctx) S.ctx=new (window.AudioContext||window.webkitAudioContext)()
-  if(S.ctx.state==='suspended') S.ctx.resume().catch(()=>{})
+  if (!S.ctx) S.ctx = new (window.AudioContext||window.webkitAudioContext)()
+  if (S.ctx.state==='suspended') S.ctx.resume().catch(()=>{})
 
-  if(!S.prefetch.has(paraIdx)) fetchPara(paraIdx)
+  if (!S.prefetch.has(paraIdx)) fetchPara(paraIdx)
   let result
-  try { result=await S.prefetch.get(paraIdx) } catch { result=null }
+  try { result = await S.prefetch.get(paraIdx) } catch { result = null }
   S.prefetch.delete(paraIdx)
 
-  if(!result) {
-    if(S.pid===pid){ toast('⚠ 合成失败，请检查网络'); setBtn('play'); setBannerText('',false) }
+  if (!result) {
+    if (S.pid===pid) { toast('⚠ 合成失败，请检查网络'); setBtn('play'); setBannerText('',false) }
     return
   }
-  if(S.pid!==pid) return
+  if (S.pid!==pid) return
 
-  const {buf,timings}=result
-  const start=S.ctx.currentTime+0.05
-  const src=S.ctx.createBufferSource()
+  const {buf, timings} = result
+  const start = S.ctx.currentTime + 0.05
+  const src = S.ctx.createBufferSource()
   src.buffer=buf; src.connect(S.ctx.destination); src.start(start)
-  S.sources=[src]
+  S.sources = [src]
 
-  S.sentTimings=timings.map(t=>({text:t.text,ctxStart:start+t.start,ctxEnd:start+t.end}))
+  S.sentTimings = timings.map(t => ({text:t.text, ctxStart:start+t.start, ctxEnd:start+t.end}))
 
   renderWords(timings); setBtn('pause'); startRaf(); S.playing=true
   fetchPara(paraIdx+1)
 
-  src.onended=()=>{ if(S.pid===pid&&S.playing) onParaEnded() }
+  src.onended = () => { if (S.pid===pid && S.playing) onParaEnded() }
 }
 
 function renderWords(timings) {
-  const el=document.getElementById('now')
-  if(!timings.length){
+  const el = document.getElementById('now')
+  if (!timings.length) {
     el.innerHTML=`<p style="color:var(--muted);font-style:italic">${esc(S.paras[S.paraIdx])}</p>`
-    setBannerText(S.paras[S.paraIdx],false); return
+    setBannerText(S.paras[S.paraIdx], false); return
   }
-  el.innerHTML=timings.map((t,i)=>`<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
-  document.getElementById('nbText').innerHTML=
-    timings.map((t,i)=>`<span class="sent" id="mb${i}">${esc(t.text)}</span>`).join('')
+  el.innerHTML = timings.map((t,i) => `<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
+  document.getElementById('nbText').innerHTML =
+    timings.map((t,i) => `<span class="sent" id="mb${i}">${esc(t.text)}</span>`).join('')
 }
 
-function setBannerText(text,active) {
-  const nb=document.getElementById('nbText')
-  if(!active) nb.innerHTML=esc(text)
-  document.getElementById('dot2').classList.toggle('on',active&&S.playing)
-  showBanner(S.paras.length>0)
+function setBannerText(text, active) {
+  const nb = document.getElementById('nbText')
+  if (!active) nb.innerHTML = esc(text)
+  document.getElementById('dot2').classList.toggle('on', active && S.playing)
+  showBanner(S.paras.length > 0)
 }
 
 function showBanner(show) {
-  const b=document.getElementById('nowBanner')
-  if(show){ b.style.display='block'; document.documentElement.style.setProperty('--banner-h',b.offsetHeight+'px') }
+  const b = document.getElementById('nowBanner')
+  if (show) { b.style.display='block'; document.documentElement.style.setProperty('--banner-h', b.offsetHeight+'px') }
   else { b.style.display='none'; document.documentElement.style.setProperty('--banner-h','0px') }
 }
 
 function onParaEnded() {
-  const next=S.paraIdx+1
-  if(next<S.paras.length) playCurrent(next,false)
+  const next = S.paraIdx + 1
+  if (next < S.paras.length) playCurrent(next, false)
   else { stopAll(); toast('朗读完毕') }
 }
 
@@ -739,114 +572,98 @@ function onParaEnded() {
 function stopAll(clearCache=true) {
   cancelAnimationFrame(S.raf)
   S.pid++; S.playing=false
-  S.sources.forEach(s=>{ try{s.stop()}catch(e){} })
+  S.sources.forEach(s => { try{s.stop()}catch(e){} })
   S.sources=[]; S.sentTimings=[]
-  if(clearCache) S.prefetch.clear()
+  if (clearCache) S.prefetch.clear()
   setBtn('play'); clearHl()
 }
 
 function togglePlay() {
-  if(S.playing){
-    S.ctx&&S.ctx.suspend()
+  if (S.playing) {
+    S.ctx && S.ctx.suspend()
     S.playing=false; cancelAnimationFrame(S.raf); setBtn('play')
     document.getElementById('dot').classList.remove('on')
     document.getElementById('dot2').classList.remove('on')
-  } else if(S.ctx&&S.ctx.state==='suspended'&&S.sources.length>0){
+  } else if (S.ctx && S.ctx.state==='suspended' && S.sources.length>0) {
     S.ctx.resume(); S.playing=true; setBtn('pause'); startRaf()
   } else {
-    playCurrent(S.paraIdx>=0?S.paraIdx:0)
+    playCurrent(S.paraIdx>=0 ? S.paraIdx : 0)
   }
 }
 
 function nav(delta) {
-  const i=S.paraIdx+delta
-  if(i>=0&&i<S.paras.length){ stopAll(); playCurrent(i) }
+  const i = S.paraIdx + delta
+  if (i>=0 && i<S.paras.length) { stopAll(); playCurrent(i) }
 }
 
 function seek(e) {
-  const pct=e.offsetX/document.getElementById('pgTrack').clientWidth
-  const i=Math.max(0,Math.min(S.paras.length-1,Math.floor(pct*S.paras.length)))
+  const pct = e.offsetX / document.getElementById('pgTrack').clientWidth
+  const i = Math.max(0, Math.min(S.paras.length-1, Math.floor(pct*S.paras.length)))
   stopAll(); playCurrent(i)
 }
 
 // ─── rAF highlight ────────────────────────────────────────────────────
 function startRaf() {
-  const tick=()=>{
-    if(!S.playing||!S.ctx) return
-    const now=S.ctx.currentTime, ti=S.sentTimings
-    let active=-1
-    for(let i=0;i<ti.length;i++) if(now>=ti[i].ctxStart&&now<ti[i].ctxEnd){active=i;break}
-    if(active===-1&&ti.length>0&&now>=ti[ti.length-1].ctxStart) active=ti.length-1
-    document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl'))
-    if(active>=0){
+  const tick = () => {
+    if (!S.playing || !S.ctx) return
+    const now = S.ctx.currentTime, ti = S.sentTimings
+    let active = -1
+    for (let i=0; i<ti.length; i++) if (now>=ti[i].ctxStart && now<ti[i].ctxEnd) {active=i;break}
+    if (active===-1 && ti.length>0 && now>=ti[ti.length-1].ctxStart) active=ti.length-1
+    document.querySelectorAll('.sent.hl').forEach(el => el.classList.remove('hl'))
+    if (active>=0) {
       const e1=document.getElementById('s'+active); if(e1) e1.classList.add('hl')
       const e2=document.getElementById('mb'+active); if(e2) e2.classList.add('hl')
     }
-    const on=S.playing
-    document.getElementById('dot').classList.toggle('on',on)
-    document.getElementById('dot2').classList.toggle('on',on)
-    S.raf=requestAnimationFrame(tick)
+    const on = S.playing
+    document.getElementById('dot').classList.toggle('on', on)
+    document.getElementById('dot2').classList.toggle('on', on)
+    S.raf = requestAnimationFrame(tick)
   }
-  S.raf=requestAnimationFrame(tick)
+  S.raf = requestAnimationFrame(tick)
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────
-function clearHl(){
-  document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl'))
+function clearHl() {
+  document.querySelectorAll('.sent.hl').forEach(el => el.classList.remove('hl'))
   document.getElementById('dot').classList.remove('on')
   document.getElementById('dot2').classList.remove('on')
 }
-function hlPara(idx){
-  document.querySelectorAll('.para.active').forEach(el=>el.classList.remove('active'))
-  const el=document.getElementById('p'+idx)
-  if(el){ el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'nearest'}) }
+function hlPara(idx) {
+  document.querySelectorAll('.para.active').forEach(el => el.classList.remove('active'))
+  const el = document.getElementById('p'+idx)
+  if (el) { el.classList.add('active'); el.scrollIntoView({behavior:'smooth', block:'nearest'}) }
 }
-function updateProg(){
-  const n=S.paras.length,i=S.paraIdx+1
+function updateProg() {
+  const n=S.paras.length, i=S.paraIdx+1
   document.getElementById('pgLbl').textContent=`${i} / ${n}`
-  document.getElementById('pgFill').style.width=(n>0?i/n*100:0)+'%'
+  document.getElementById('pgFill').style.width=(n>0 ? i/n*100 : 0)+'%'
 }
-function setBtn(mode){
-  const b=document.getElementById('btnPlay')
-  if(mode==='load'){b.innerHTML='&#9203;';b.disabled=true}
-  else if(mode==='pause'){b.innerHTML='&#9646;&#9646;';b.disabled=false}
-  else{b.innerHTML='&#9654;';b.disabled=false}
+function setBtn(mode) {
+  const b = document.getElementById('btnPlay')
+  if (mode==='load')  { b.innerHTML='&#9203;'; b.disabled=true }
+  else if (mode==='pause') { b.innerHTML='&#9646;&#9646;'; b.disabled=false }
+  else { b.innerHTML='&#9654;'; b.disabled=false }
 }
-function showOv(msg){ document.getElementById('ovMsg').textContent=msg; document.getElementById('ov').classList.remove('gone') }
-function hideOv(){ document.getElementById('ov').classList.add('gone') }
-function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function showOv(msg) { document.getElementById('ovMsg').textContent=msg; document.getElementById('ov').classList.remove('gone') }
+function hideOv()    { document.getElementById('ov').classList.add('gone') }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
 let _tt=0
-function toast(msg,dur=2500){
+function toast(msg, dur=2500) {
   const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show')
-  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),dur)
+  clearTimeout(_tt); _tt=setTimeout(() => el.classList.remove('show'), dur)
 }
 
-// ─── Keyboard ─────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{
-  if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return
-  if(e.code==='Space'){e.preventDefault();togglePlay()}
-  else if(e.code==='ArrowRight'||e.code==='ArrowDown'){e.preventDefault();nav(1)}
-  else if(e.code==='ArrowLeft'||e.code==='ArrowUp'){e.preventDefault();nav(-1)}
+document.addEventListener('keydown', e => {
+  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return
+  if (e.code==='Space')      { e.preventDefault(); togglePlay() }
+  else if (e.code==='ArrowRight'||e.code==='ArrowDown') { e.preventDefault(); nav(1) }
+  else if (e.code==='ArrowLeft' ||e.code==='ArrowUp')   { e.preventDefault(); nav(-1) }
 })
 
-// ─── Init: handle shared link or show library ─────────────────────────
-IDB.migrate().then(async () => {
-  const sharedId = new URLSearchParams(location.search).get('b')
-  if (sharedId) {
-    history.replaceState({}, '', location.pathname)
-    const existing = (await IDB.getAll()).find(b => b.serverBookId === sharedId)
-    if (existing) {
-      renderLibrary()
-      openBook(existing.id)
-    } else {
-      renderLibrary()
-      fetchAndAddBook(sharedId)
-    }
-  } else {
-    renderLibrary()
-  }
-})
+// ─── Init ─────────────────────────────────────────────────────────────
+renderLibrary()
 </script>
 </body>
 </html>
