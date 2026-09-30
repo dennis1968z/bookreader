@@ -27,14 +27,25 @@ def sb_save(book_id: str, title: str, cover, paragraphs: list, lang: str) -> boo
     if not _sb_ok():
         return False
     try:
+        payload = {'id': book_id, 'title': title, 'cover': cover,
+                   'paragraphs': paragraphs, 'lang': lang}
         r = _http.post(
             f'{_SB_URL}/rest/v1/books',
             headers={**_sb_hdrs(), 'Prefer': 'return=minimal'},
-            json={'id': book_id, 'title': title, 'cover': cover,
-                  'paragraphs': paragraphs, 'lang': lang},
+            json=payload,
             timeout=15,
         )
-        return r.status_code in (200, 201)
+        if r.status_code in (200, 201):
+            return True
+        # cover column may not exist — retry without it
+        payload.pop('cover', None)
+        r2 = _http.post(
+            f'{_SB_URL}/rest/v1/books',
+            headers={**_sb_hdrs(), 'Prefer': 'return=minimal'},
+            json=payload,
+            timeout=15,
+        )
+        return r2.status_code in (200, 201)
     except Exception:
         return False
 
@@ -63,7 +74,16 @@ def sb_list() -> list:
             timeout=10,
         )
         data = r.json()
-        return data if isinstance(data, list) else []
+        if isinstance(data, list):
+            return data
+        # cover column may not exist — retry without it
+        r2 = _http.get(
+            f'{_SB_URL}/rest/v1/books?select=id,title,lang,created_at&order=created_at.desc',
+            headers=_sb_hdrs(),
+            timeout=10,
+        )
+        data2 = r2.json()
+        return data2 if isinstance(data2, list) else []
     except Exception:
         return []
 
@@ -224,21 +244,47 @@ def extract_doc(data: bytes) -> str:
     raise RuntimeError('.doc 解析失败，建议在 Word 中另存为 .docx 格式后重试')
 
 
-# ─── Cover extraction ─────────────────────────────────────────────────────────
+# ─── Cover helpers ────────────────────────────────────────────────────────────
+
+_COVER_GRADS = [
+    ('#1a3860','#2d6ba8'),('#5a1a20','#a83030'),('#1a5a28','#2da842'),
+    ('#3a1a60','#7030a8'),('#5a3a10','#a87020'),('#0e4a50','#1a8090'),
+]
+
+def _svg_cover(title: str) -> str:
+    """Generate an SVG cover with gradient background + first letter."""
+    i = (ord(title[0]) if title else 65) % len(_COVER_GRADS)
+    c1, c2 = _COVER_GRADS[i]
+    letter = (title[0] if title else '?').upper()
+    short = title[:20].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
+        f'<defs><linearGradient id="g" x1="0.2" y1="0" x2="0.8" y2="1">'
+        f'<stop offset="0%" stop-color="{c1}"/>'
+        f'<stop offset="100%" stop-color="{c2}"/>'
+        f'</linearGradient></defs>'
+        f'<rect width="120" height="160" fill="url(#g)"/>'
+        f'<text x="60" y="76" font-family="serif" font-size="52" font-weight="700" '
+        f'fill="rgba(255,255,255,.85)" text-anchor="middle" dominant-baseline="middle">{letter}</text>'
+        f'<text x="60" y="134" font-family="sans-serif" font-size="8" '
+        f'fill="rgba(255,255,255,.65)" text-anchor="middle">{short}</text>'
+        f'</svg>'
+    )
+    return 'data:image/svg+xml;base64,' + base64.b64encode(svg.encode()).decode()
+
 
 def extract_cover(data: bytes, filename: str) -> str | None:
-    """Return cover as a base64 data-URL, or None."""
+    """Return real cover as a base64 data-URL for PDF/EPUB, or None."""
     name = filename.lower()
     try:
         if name.endswith('.pdf'):
             import fitz
             doc = fitz.open(stream=data, filetype='pdf')
             page = doc[0]
-            # Scale to ~120px wide thumbnail
-            scale = 120 / page.rect.width
+            scale = 300 / page.rect.width   # ~300px wide thumbnail
             pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale))
-            raw = pix.tobytes('jpeg')
-            if len(raw) > 60_000:          # safety cap
+            raw = pix.tobytes('jpeg', jpg_quality=80)
+            if len(raw) > 300_000:
                 return None
             return 'data:image/jpeg;base64,' + base64.b64encode(raw).decode()
 
@@ -258,7 +304,7 @@ def extract_cover(data: bytes, filename: str) -> str | None:
                 nm = (item.file_name or '').lower()
                 if 'cover' in nm or item.get_type() == ebooklib.ITEM_COVER:
                     raw = item.get_content()
-                    if len(raw) > 60_000:
+                    if len(raw) > 300_000:
                         return None
                     return f'data:{mt};base64,' + base64.b64encode(raw).decode()
     except Exception:
@@ -328,8 +374,8 @@ def upload():
         if not paras:
             return jsonify({'error': 'No text found'}), 400
         lang = detect_lang(' '.join(paras[:10]))
-        cover = extract_cover(data, f.filename)
         title = f.filename.rsplit('.', 1)[0] if '.' in f.filename else f.filename
+        cover = extract_cover(data, f.filename) or _svg_cover(title)
         book_id = str(uuid.uuid4())
         sb_save(book_id, title, cover, paras, lang)
         return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras),
