@@ -9,19 +9,18 @@
 :root{
   --bg:#111113;--surf:#1c1c20;--surf2:#242428;--border:#2e2e36;
   --accent:#d4a54a;--text:#e4e4e8;--muted:#8888a0;
-  --play-bg:#1d1a11;--sent-hl:#d4a54a33;--sent-line:#d4a54aaa;
-  --serif:'Georgia','Noto Serif SC',serif;--sans:system-ui,-apple-system,sans-serif;
-  --hdr-h:54px;--bar-h:60px
+  --play-bg:#1d1a11;--sent-hl:#d4a54a38;--sent-line:#d4a54a99;
+  --serif:'Georgia','Noto Serif SC',serif;--sans:system-ui,-apple-system,sans-serif
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
 
 /* ─ Shared ─ */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:500}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:800}
 .overlay.gone{display:none}
 .spin{width:46px;height:46px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .overlay p{font-size:14px;color:var(--muted)}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2d2d35;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;color:var(--text);opacity:0;transition:opacity .3s;pointer-events:none;z-index:600;white-space:nowrap}
+.toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2d2d35;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;color:var(--text);opacity:0;transition:opacity .3s;pointer-events:none;z-index:700;white-space:nowrap}
 .toast.show{opacity:1}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -30,7 +29,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* ══ LIBRARY VIEW ══════════════════════════════════════════════════════ */
 #viewLibrary{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10}
 #viewLibrary.gone{display:none}
-.lib-hdr{height:var(--hdr-h);background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+.lib-hdr{height:54px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
 .lib-hdr .brand{font-size:20px}
 .lib-hdr h1{font-size:17px;font-weight:600;flex:1}
 .lib-add{display:flex;align-items:center;gap:6px;background:var(--accent);color:#111;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
@@ -46,10 +45,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .book-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;transition:transform .15s,border-color .15s}
 .book-card:active{transform:scale(.97)}
 @media(hover:hover){.book-card:hover{transform:translateY(-3px);border-color:var(--accent)}}
-.book-cover{width:100%;aspect-ratio:3/4;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.book-cover{width:100%;aspect-ratio:3/4;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
 .book-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.book-cover-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px}
-.book-cover-ph .ph-letter{font-size:32px;font-weight:700;color:#fff;opacity:.8;line-height:1}
+.book-cover-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.book-cover-ph .ph-letter{font-size:32px;font-weight:700;color:#fff;opacity:.8}
 .book-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
 .book-card:hover .book-del{opacity:1}
 .book-del-ov{display:none;position:absolute;inset:0;z-index:4;background:rgba(20,5,5,.88);border-radius:10px;border:1.5px solid #c0392b;flex-direction:column;align-items:center;justify-content:center;gap:10px}
@@ -67,70 +66,95 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   .book-del{opacity:.65;width:28px;height:28px;font-size:15px}
 }
 
-/* ══ READER VIEW ═══════════════════════════════════════════════════════ */
-#viewReader{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10}
+/* ══ READER VIEW — single canvas ══════════════════════════════════════ */
+#viewReader{position:fixed;inset:0;z-index:10}
 #viewReader.gone{display:none}
 
-/* Header */
-.hdr{position:fixed;top:0;left:0;right:0;height:var(--hdr-h);background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:100}
-.back-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.back-btn:hover{border-color:var(--accent);color:var(--accent)}
-.hdr .book-name{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.hdr .hcontrols{display:flex;align-items:center;gap:6px;flex-shrink:0}
-select{background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;outline:none}
-select:focus{border-color:var(--accent)}
-
-/* Book content — single scrollable column */
-.reader-scroll{
-  position:fixed;top:var(--hdr-h);bottom:var(--bar-h);left:0;right:0;
+/* Full-screen scrollable reading area */
+.reader-area{
+  position:absolute;inset:0;
   overflow-y:auto;
-}
-.reader-scroll::-webkit-scrollbar{width:5px}
-.reader-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
-.plist{max-width:760px;margin:0 auto;padding:16px 24px 32px}
-
-.para{
-  padding:12px 16px;margin-bottom:6px;
-  border-radius:8px;border-left:3px solid transparent;
+  background:var(--bg);
   cursor:pointer;
-  font-family:var(--serif);font-size:16px;line-height:1.9;color:var(--text);
-  transition:background .12s,border-color .12s
 }
-.para:hover{background:var(--surf2)}
-.para.active{background:var(--play-bg);border-left-color:var(--accent)}
-.para-idx{font-size:11px;color:var(--muted);font-family:var(--sans);margin-bottom:3px;user-select:none}
-.para-body{line-height:inherit}
+.plist{
+  max-width:700px;margin:0 auto;
+  padding:80px 24px 110px;
+}
 
-/* Sentence highlight inside active paragraph */
-.sent{display:inline;border-radius:3px;padding:1px 0;transition:background .12s,box-shadow .12s}
+/* Paragraph + sentence */
+.para{
+  padding:12px 4px;margin-bottom:4px;
+  border-left:3px solid transparent;
+  border-radius:4px;
+  font-family:var(--serif);font-size:17px;line-height:2;color:var(--text);
+  transition:background .15s,border-color .15s
+}
+.para.active{background:var(--play-bg);border-left-color:var(--accent);padding-left:14px}
+.para-idx{font-size:11px;color:var(--muted);font-family:var(--sans);margin-bottom:4px;user-select:none}
+.para-body{line-height:inherit}
+.sent{display:inline;border-radius:3px;padding:1px 0;transition:background .15s,box-shadow .15s}
 .sent.hl{background:var(--sent-hl);box-shadow:inset 0 -2px 0 var(--sent-line)}
 
-/* Control bar */
-.ctrlbar{position:fixed;bottom:0;left:0;right:0;height:var(--bar-h);background:var(--surf);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;z-index:100}
-.cbtn{width:36px;height:36px;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
+/* ─ Floating control overlay ─────────────────────────────────────────
+   Two gradient bands (top + bottom) that slide in/out.
+   Pointer-events:none on wrapper, re-enabled on the bands.
+*/
+.ctrl-layer{
+  position:fixed;inset:0;z-index:50;
+  pointer-events:none;
+}
+
+.ctrl-top{
+  position:absolute;top:0;left:0;right:0;
+  padding:14px 16px 48px;
+  background:linear-gradient(180deg,rgba(17,17,19,.96) 0%,rgba(17,17,19,0) 100%);
+  display:flex;align-items:center;gap:10px;
+  pointer-events:all;
+  transition:opacity .35s,transform .35s;
+}
+.ctrl-bottom{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:48px 14px 22px;
+  background:linear-gradient(0deg,rgba(17,17,19,.96) 0%,rgba(17,17,19,0) 100%);
+  display:flex;align-items:center;gap:10px;
+  pointer-events:all;
+  transition:opacity .35s,transform .35s;
+}
+
+/* Hidden state */
+.ctrl-layer.hidden .ctrl-top{opacity:0;transform:translateY(-100%);pointer-events:none}
+.ctrl-layer.hidden .ctrl-bottom{opacity:0;transform:translateY(100%);pointer-events:none}
+
+/* Controls styling */
+.back-btn{background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.book-name-ctrl{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+select{background:rgba(36,36,40,.9);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;outline:none;flex-shrink:0}
+select:focus{border-color:var(--accent)}
+
+.cbtn{width:38px;height:38px;border-radius:50%;background:rgba(28,28,32,.8);border:1px solid var(--border);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
 .cbtn:hover{border-color:var(--accent);color:var(--accent)}
-.cbtn.play{width:44px;height:44px;font-size:17px;background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+.cbtn.play{width:46px;height:46px;font-size:18px;background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
 .cbtn.play:hover{opacity:.82}
-.cbtn.play:disabled{opacity:.5;cursor:default}
+.cbtn.play:disabled{opacity:.45;cursor:default}
+
 .prog-wrap{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
-.prog-track{height:4px;background:var(--border);border-radius:2px;cursor:pointer;position:relative}
+.prog-track{height:4px;background:rgba(255,255,255,.15);border-radius:2px;cursor:pointer}
 .prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
 .prog-lbl{font-size:11px;color:var(--muted)}
 .speed-wrap{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-shrink:0}
-input[type=range]{-webkit-appearance:none;width:72px;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]{-webkit-appearance:none;width:68px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer}
 
 @media(max-width:680px){
-  :root{--bar-h:68px}
-  .plist{padding:10px 14px 24px}
-  .para{font-size:16px;line-height:1.9;padding:12px 10px}
-  .cbtn{width:44px;height:44px;font-size:15px}
+  .plist{padding:72px 16px 96px}
+  .para{font-size:16px;line-height:1.9}
+  .cbtn{width:44px;height:44px}
   .cbtn.play{width:52px;height:52px;font-size:20px}
-  .ctrlbar{gap:8px;padding:0 12px}
   .speed-wrap{display:none}
+  .ctrl-bottom{gap:8px;padding-bottom:28px}
   .prog-track{height:6px}
-  .toast{bottom:calc(var(--bar-h) + 8px)}
 }
 </style>
 </head>
@@ -151,42 +175,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="lib-body" id="libBody"></div>
 </div>
 
-<!-- ══ READER VIEW ═══════════════════════════════════════════════════ -->
+<!-- ══ READER VIEW — single canvas ══════════════════════════════════ -->
 <div id="viewReader" class="gone">
-  <div class="hdr">
-    <button class="back-btn" onclick="goLibrary()">← 书架</button>
-    <div class="book-name" id="bookName"></div>
-    <div class="hcontrols">
-      <select id="vsel" title="选择声音"></select>
-    </div>
-  </div>
 
-  <div class="reader-scroll" id="readerScroll">
+  <!-- The one and only display area: full-screen book text -->
+  <div class="reader-area" id="readerArea">
     <div class="plist" id="plist"></div>
   </div>
 
-  <div class="ctrlbar">
-    <button class="cbtn" onclick="nav(-1)">&#9664;</button>
-    <button class="cbtn play" id="btnPlay" onclick="togglePlay()" disabled>&#9654;</button>
-    <button class="cbtn" onclick="nav(1)">&#9654;</button>
-    <div class="prog-wrap">
-      <div class="prog-track" id="pgTrack" onclick="seek(event)">
-        <div class="prog-fill" id="pgFill" style="width:0%"></div>
-      </div>
-      <div class="prog-lbl" id="pgLbl">0 / 0</div>
+  <!-- Control overlay — floats above the text, fades in/out -->
+  <div class="ctrl-layer" id="ctrlLayer">
+    <div class="ctrl-top">
+      <button class="back-btn" onclick="goLibrary()">← 书架</button>
+      <div class="book-name-ctrl" id="bookName"></div>
+      <select id="vsel" title="声音"></select>
     </div>
-    <div class="speed-wrap">
-      速度
-      <input type="range" id="spd" min="0.5" max="2.0" step="0.1" value="1.0"
-        oninput="document.getElementById('spdLbl').textContent=parseFloat(this.value).toFixed(1)+'×'">
-      <span id="spdLbl">1.0×</span>
+    <div class="ctrl-bottom">
+      <button class="cbtn" onclick="nav(-1)">&#9664;</button>
+      <button class="cbtn play" id="btnPlay" onclick="togglePlay()" disabled>&#9654;</button>
+      <button class="cbtn" onclick="nav(1)">&#9654;</button>
+      <div class="prog-wrap">
+        <div class="prog-track" id="pgTrack" onclick="seek(event)">
+          <div class="prog-fill" id="pgFill" style="width:0%"></div>
+        </div>
+        <div class="prog-lbl" id="pgLbl">0 / 0</div>
+      </div>
+      <div class="speed-wrap">
+        速度
+        <input type="range" id="spd" min="0.5" max="2.0" step="0.1" value="1.0"
+          oninput="document.getElementById('spdLbl').textContent=parseFloat(this.value).toFixed(1)+'×'">
+        <span id="spdLbl">1.0×</span>
+      </div>
     </div>
   </div>
+
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════
-//  Local cache: progress in localStorage, paragraphs in IndexedDB
+//  Local cache
 // ════════════════════════════════════════════════════════
 function progGet(sid) { return +localStorage.getItem('p_'+sid) || 0 }
 function progSet(sid, n) { if (sid) localStorage.setItem('p_'+sid, n) }
@@ -208,14 +235,14 @@ const BookCache = (() => {
     return new Promise((res,rej) => {
       const tx = db.transaction(ST,'readwrite')
       tx.objectStore(ST).put({id, title, paragraphs, lang, t: Date.now()})
-      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error)
+      tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error)
     })
   }
   async function get(id) {
     const db = await _open()
     return new Promise((res,rej) => {
       const r = db.transaction(ST,'readonly').objectStore(ST).get(id)
-      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error)
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error)
     })
   }
   async function del(id) {
@@ -223,11 +250,38 @@ const BookCache = (() => {
     return new Promise((res,rej) => {
       const tx = db.transaction(ST,'readwrite')
       tx.objectStore(ST).delete(id)
-      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error)
+      tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error)
     })
   }
   return {put, get, del}
 })()
+
+// ════════════════════════════════════════════════════════
+//  Control overlay show/hide
+// ════════════════════════════════════════════════════════
+let _ctrlTimer = 0
+
+function showCtrl(autoHide=false) {
+  clearTimeout(_ctrlTimer)
+  document.getElementById('ctrlLayer').classList.remove('hidden')
+  if (autoHide) {
+    _ctrlTimer = setTimeout(() => { if (S.playing) hideCtrl() }, 3500)
+  }
+}
+function hideCtrl() {
+  document.getElementById('ctrlLayer').classList.add('hidden')
+}
+
+// Tap content area → toggle controls
+document.addEventListener('click', e => {
+  if (!document.getElementById('viewReader').classList.contains('gone')) {
+    // Clicks inside ctrl-layer don't toggle
+    if (e.target.closest('.ctrl-layer')) return
+    const layer = document.getElementById('ctrlLayer')
+    if (layer.classList.contains('hidden')) showCtrl()
+    else if (S.playing) hideCtrl()
+  }
+})
 
 // ════════════════════════════════════════════════════════
 //  Library
@@ -264,16 +318,14 @@ async function renderLibrary() {
 }
 
 function bookCardHtml(b) {
-  const prog = progGet(b.id), cnt = cntGet(b.id)
-  const pct  = cnt > 0 ? Math.round(prog / cnt * 100) : 0
+  const prog=progGet(b.id), cnt=cntGet(b.id)
+  const pct = cnt>0 ? Math.round(prog/cnt*100) : 0
   const coverHtml = b.cover
     ? `<img src="${b.cover}" alt="" loading="lazy">`
     : `<div class="book-cover-ph" style="background:${coverGrad(b.title)}">
          <div class="ph-letter">${esc((b.title||'?')[0])}</div>
        </div>`
-  const progStr = cnt > 0
-    ? (prog > 0 ? `第${prog+1}/${cnt}段 · ${pct}%` : `共${cnt}段`)
-    : (prog > 0 ? `第${prog+1}段` : '未读')
+  const progStr = cnt>0 ? (prog>0?`第${prog+1}/${cnt}段 · ${pct}%`:`共${cnt}段`) : (prog>0?`第${prog+1}段`:'未读')
   const sid = b.id.replace(/[^a-z0-9]/gi,'_')
   return `
     <div class="book-card" id="bc_${sid}" onclick="cardClick('${b.id}')">
@@ -293,20 +345,19 @@ function bookCardHtml(b) {
 }
 
 function _sid(id) { return id.replace(/[^a-z0-9]/gi,'_') }
-
 function cardClick(id) {
   const card = document.getElementById('bc_'+_sid(id))
   if (card && card.classList.contains('confirming')) { cancelDel(id); return }
   openBook(id)
 }
 function startDel(id) {
-  document.querySelectorAll('.book-card.confirming').forEach(el => el.classList.remove('confirming'))
+  document.querySelectorAll('.book-card.confirming').forEach(el=>el.classList.remove('confirming'))
   const card = document.getElementById('bc_'+_sid(id))
-  if (card) { card.classList.add('confirming'); setTimeout(() => card.classList.remove('confirming'), 4000) }
+  if (card) { card.classList.add('confirming'); setTimeout(()=>card.classList.remove('confirming'),4000) }
 }
 async function confirmDel(id) {
-  try { await fetch('/book/'+id, {method:'DELETE'}) } catch {}
-  BookCache.del(id).catch(() => {})
+  try { await fetch('/book/'+id,{method:'DELETE'}) } catch {}
+  BookCache.del(id).catch(()=>{})
   localStorage.removeItem('p_'+id); localStorage.removeItem('c_'+id)
   renderLibrary()
 }
@@ -327,69 +378,65 @@ async function openBook(serverBookId) {
   let cached = null
   try { cached = await BookCache.get(serverBookId) } catch {}
   if (cached && cached.paragraphs && cached.paragraphs.length) {
-    _startReading(serverBookId, cached.title, cached.paragraphs, cached.lang || 'z')
+    _startReading(serverBookId, cached.title, cached.paragraphs, cached.lang||'z')
     return
   }
   showOv('加载书籍…')
   try {
-    const r = await fetch('/book/' + serverBookId)
+    const r = await fetch('/book/'+serverBookId)
     const d = await r.json()
-    if (!r.ok || d.error) throw new Error(d.error || '获取失败')
-    BookCache.put(serverBookId, d.title, d.paragraphs, d.lang).catch(() => {})
-    cntSet(serverBookId, d.paragraphs.length)
+    if (!r.ok||d.error) throw new Error(d.error||'获取失败')
+    BookCache.put(serverBookId,d.title,d.paragraphs,d.lang).catch(()=>{})
+    cntSet(serverBookId,d.paragraphs.length)
     hideOv()
-    _startReading(serverBookId, d.title, d.paragraphs, d.lang || 'z')
-  } catch(e) {
-    hideOv(); toast('❌ ' + e.message, 4000)
-  }
+    _startReading(serverBookId,d.title,d.paragraphs,d.lang||'z')
+  } catch(e) { hideOv(); toast('❌ '+e.message,4000) }
 }
 
 function _startReading(serverBookId, title, paragraphs, lang) {
-  S.bookId = serverBookId; S.paras = paragraphs; S.lang = lang; S.paraIdx = -1
-  cntSet(serverBookId, paragraphs.length)
-  document.getElementById('bookName').textContent = title
+  S.bookId=serverBookId; S.paras=paragraphs; S.lang=lang; S.paraIdx=-1
+  cntSet(serverBookId,paragraphs.length)
+  document.getElementById('bookName').textContent=title
   fillVoices(lang)
   renderList()
-  document.getElementById('btnPlay').disabled = false
+  document.getElementById('btnPlay').disabled=false
   document.getElementById('viewLibrary').classList.add('gone')
   document.getElementById('viewReader').classList.remove('gone')
+  showCtrl()
   playCurrent(progGet(serverBookId))
 }
 
 // ─── File upload ──────────────────────────────────────────────────────
-document.getElementById('fInput').onchange = e => {
-  if (e.target.files[0]) addBook(e.target.files[0]); e.target.value = ''
+document.getElementById('fInput').onchange=e=>{
+  if(e.target.files[0]) addBook(e.target.files[0]); e.target.value=''
 }
 async function addBook(file) {
-  if (!S.ctx) S.ctx = new (window.AudioContext || window.webkitAudioContext)()
+  if(!S.ctx) S.ctx=new (window.AudioContext||window.webkitAudioContext)()
   showOv('正在解析文件…')
-  const fd = new FormData(); fd.append('file', file)
+  const fd=new FormData(); fd.append('file',file)
   try {
-    const r = await fetch('/upload', {method:'POST', body:fd})
-    const d = await r.json()
-    if (d.error) throw new Error(d.error)
-    if (!d.book_id) throw new Error('云端存储未配置')
-    const title = file.name.replace(/\.[^.]+$/, '')
-    BookCache.put(d.book_id, title, d.paragraphs, d.lang).catch(() => {})
-    cntSet(d.book_id, d.paragraphs.length)
+    const r=await fetch('/upload',{method:'POST',body:fd})
+    const d=await r.json()
+    if(d.error) throw new Error(d.error)
+    if(!d.book_id) throw new Error('云端存储未配置')
+    const title=file.name.replace(/\.[^.]+$/,'')
+    BookCache.put(d.book_id,title,d.paragraphs,d.lang).catch(()=>{})
+    cntSet(d.book_id,d.paragraphs.length)
     hideOv()
-    _startReading(d.book_id, title, d.paragraphs, d.lang || 'z')
-  } catch(e) {
-    hideOv(); toast('❌ ' + e.message, 4000); renderLibrary()
-  }
+    _startReading(d.book_id,title,d.paragraphs,d.lang||'z')
+  } catch(e) { hideOv(); toast('❌ '+e.message,4000); renderLibrary() }
 }
 
 // ════════════════════════════════════════════════════════
-//  Player state
+//  Player
 // ════════════════════════════════════════════════════════
 const S = {
-  bookId: null, paras: [], lang: 'z', paraIdx: -1,
-  playing: false, ctx: null, sources: [],
-  sentTimings: [], pid: 0, raf: 0,
-  prefetch: new Map(),
+  bookId:null, paras:[], lang:'z', paraIdx:-1,
+  playing:false, ctx:null, sources:[],
+  sentTimings:[], pid:0, raf:0,
+  prefetch:new Map(),
 }
 
-// ─── Voices ───────────────────────────────────────────────────────────
 const VOICES = {
   zh:[
     {id:'zh-CN-XiaoxiaoNeural',label:'晓晓 (女)'},
@@ -405,214 +452,196 @@ const VOICES = {
   ]
 }
 function fillVoices(lang) {
-  const sel = document.getElementById('vsel'), cur = sel.value
-  sel.innerHTML = ''
-  for (const v of (lang==='z' ? VOICES.zh : VOICES.en)) {
-    const o = document.createElement('option')
+  const sel=document.getElementById('vsel'), cur=sel.value
+  sel.innerHTML=''
+  for(const v of (lang==='z'?VOICES.zh:VOICES.en)){
+    const o=document.createElement('option')
     o.value=v.id; o.textContent=v.label
-    if (v.id===cur) o.selected=true
+    if(v.id===cur) o.selected=true
     sel.appendChild(o)
   }
 }
 fillVoices('z')
-document.getElementById('vsel').addEventListener('change', () => S.prefetch.clear())
-document.getElementById('spd').addEventListener('change',  () => S.prefetch.clear())
+document.getElementById('vsel').addEventListener('change',()=>S.prefetch.clear())
+document.getElementById('spd').addEventListener('change',()=>S.prefetch.clear())
 
-// ─── Paragraph list ───────────────────────────────────────────────────
 function renderList() {
-  const list = document.getElementById('plist')
-  list.innerHTML = ''
-  S.paras.forEach((txt, i) => {
-    const d = document.createElement('div')
-    d.className = 'para'; d.id = 'p'+i
-    d.innerHTML = `<div class="para-idx">${i+1}</div><div class="para-body">${esc(txt)}</div>`
-    d.onclick = () => { stopAll(); playCurrent(i) }
+  const list=document.getElementById('plist')
+  list.innerHTML=''
+  S.paras.forEach((txt,i)=>{
+    const d=document.createElement('div')
+    d.className='para'; d.id='p'+i
+    d.innerHTML=`<div class="para-idx">${i+1}</div><div class="para-body">${esc(txt)}</div>`
+    d.onclick=()=>{ stopAll(); playCurrent(i) }
     list.appendChild(d)
   })
   updateProg()
 }
 
-// Restore a paragraph's body back to plain text
 function restoreParaBody(idx) {
-  if (idx < 0 || idx >= S.paras.length) return
-  const body = document.querySelector('#p'+idx+' .para-body')
-  if (body) body.innerHTML = esc(S.paras[idx])
+  if(idx<0||idx>=S.paras.length) return
+  const body=document.querySelector('#p'+idx+' .para-body')
+  if(body) body.innerHTML=esc(S.paras[idx])
 }
 
-// ─── Prefetch ─────────────────────────────────────────────────────────
 function fetchPara(idx) {
-  if (idx<0 || idx>=S.paras.length || S.prefetch.has(idx)) return
-  const voice = document.getElementById('vsel').value
-  const speed = parseFloat(document.getElementById('spd').value)
-  S.prefetch.set(idx, fetch('/synthesize', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({text:S.paras[idx], voice, lang:S.lang, speed})
-  }).then(async r => {
-    if (!r.ok) throw new Error('HTTP '+r.status)
-    const timings = JSON.parse(r.headers.get('X-Timings') || '[]')
-    const ab = await r.arrayBuffer()
-    const buf = await S.ctx.decodeAudioData(ab)
-    return {buf, timings}
-  }).catch(() => null))
+  if(idx<0||idx>=S.paras.length||S.prefetch.has(idx)) return
+  const voice=document.getElementById('vsel').value
+  const speed=parseFloat(document.getElementById('spd').value)
+  S.prefetch.set(idx, fetch('/synthesize',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:S.paras[idx],voice,lang:S.lang,speed})
+  }).then(async r=>{
+    if(!r.ok) throw new Error('HTTP '+r.status)
+    const timings=JSON.parse(r.headers.get('X-Timings')||'[]')
+    const ab=await r.arrayBuffer()
+    const buf=await S.ctx.decodeAudioData(ab)
+    return {buf,timings}
+  }).catch(()=>null))
 }
 
-// ─── Play ─────────────────────────────────────────────────────────────
 async function playCurrent(paraIdx, clearCache=true) {
   stopAll(clearCache)
-  S.paraIdx = paraIdx
-  const pid = ++S.pid
-
-  progSet(S.bookId, paraIdx)
+  S.paraIdx=paraIdx
+  const pid=++S.pid
+  progSet(S.bookId,paraIdx)
   hlPara(paraIdx); updateProg(); setBtn('load')
 
-  if (!S.ctx) S.ctx = new (window.AudioContext || window.webkitAudioContext)()
-  if (S.ctx.state==='suspended') S.ctx.resume().catch(() => {})
+  if(!S.ctx) S.ctx=new (window.AudioContext||window.webkitAudioContext)()
+  if(S.ctx.state==='suspended') S.ctx.resume().catch(()=>{})
 
-  if (!S.prefetch.has(paraIdx)) fetchPara(paraIdx)
+  if(!S.prefetch.has(paraIdx)) fetchPara(paraIdx)
   let result
-  try { result = await S.prefetch.get(paraIdx) } catch { result = null }
+  try { result=await S.prefetch.get(paraIdx) } catch { result=null }
   S.prefetch.delete(paraIdx)
 
-  if (!result) {
-    if (S.pid===pid) { toast('⚠ 合成失败，请检查网络'); setBtn('play') }
+  if(!result){
+    if(S.pid===pid){ toast('⚠ 合成失败，请检查网络'); setBtn('play') }
     return
   }
-  if (S.pid!==pid) return
+  if(S.pid!==pid) return
 
-  const {buf, timings} = result
+  const {buf,timings}=result
+  renderWordsInPara(paraIdx,timings)
 
-  // Render sentence spans inside the active paragraph
-  renderWordsInPara(paraIdx, timings)
-
-  const start = S.ctx.currentTime + 0.05
-  const src = S.ctx.createBufferSource()
+  const start=S.ctx.currentTime+0.05
+  const src=S.ctx.createBufferSource()
   src.buffer=buf; src.connect(S.ctx.destination); src.start(start)
-  S.sources = [src]
-
-  S.sentTimings = timings.map(t => ({text:t.text, ctxStart:start+t.start, ctxEnd:start+t.end}))
+  S.sources=[src]
+  S.sentTimings=timings.map(t=>({text:t.text,ctxStart:start+t.start,ctxEnd:start+t.end}))
 
   setBtn('pause'); startRaf(); S.playing=true
-  fetchPara(paraIdx + 1)
+  showCtrl(true)   // briefly show then auto-hide while playing
+  fetchPara(paraIdx+1)
 
-  src.onended = () => { if (S.pid===pid && S.playing) onParaEnded() }
+  src.onended=()=>{ if(S.pid===pid&&S.playing) onParaEnded() }
 }
 
 function renderWordsInPara(paraIdx, timings) {
-  const body = document.querySelector('#p'+paraIdx+' .para-body')
-  if (!body) return
-  if (!timings.length) {
-    body.innerHTML = esc(S.paras[paraIdx])
-    return
-  }
-  body.innerHTML = timings.map((t,i) => `<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
+  const body=document.querySelector('#p'+paraIdx+' .para-body')
+  if(!body) return
+  body.innerHTML=timings.length
+    ? timings.map((t,i)=>`<span class="sent" id="s${i}">${esc(t.text)}</span>`).join('')
+    : esc(S.paras[paraIdx])
 }
 
 function onParaEnded() {
   restoreParaBody(S.paraIdx)
-  const next = S.paraIdx + 1
-  if (next < S.paras.length) playCurrent(next, false)
+  const next=S.paraIdx+1
+  if(next<S.paras.length) playCurrent(next,false)
   else { stopAll(); toast('朗读完毕') }
 }
 
-// ─── Stop / Pause / Resume ────────────────────────────────────────────
 function stopAll(clearCache=true) {
   cancelAnimationFrame(S.raf)
   restoreParaBody(S.paraIdx)
   S.pid++; S.playing=false
-  S.sources.forEach(s => { try{s.stop()}catch(e){} })
+  S.sources.forEach(s=>{try{s.stop()}catch(e){}})
   S.sources=[]; S.sentTimings=[]
-  if (clearCache) S.prefetch.clear()
+  if(clearCache) S.prefetch.clear()
   setBtn('play'); clearHl()
+  showCtrl()  // always show controls when stopped
 }
 
 function togglePlay() {
-  if (S.playing) {
-    S.ctx && S.ctx.suspend()
+  if(S.playing){
+    S.ctx&&S.ctx.suspend()
     S.playing=false; cancelAnimationFrame(S.raf); setBtn('play'); clearHl()
-  } else if (S.ctx && S.ctx.state==='suspended' && S.sources.length>0) {
+    showCtrl()
+  } else if(S.ctx&&S.ctx.state==='suspended'&&S.sources.length>0){
     S.ctx.resume(); S.playing=true; setBtn('pause'); startRaf()
+    showCtrl(true)
   } else {
-    playCurrent(S.paraIdx >= 0 ? S.paraIdx : 0)
+    playCurrent(S.paraIdx>=0?S.paraIdx:0)
   }
 }
 
-function nav(delta) {
-  const i = S.paraIdx + delta
-  if (i>=0 && i<S.paras.length) { stopAll(); playCurrent(i) }
+function nav(delta){
+  const i=S.paraIdx+delta
+  if(i>=0&&i<S.paras.length){ stopAll(); playCurrent(i) }
 }
 
-function seek(e) {
-  const pct = e.offsetX / document.getElementById('pgTrack').clientWidth
-  const i = Math.max(0, Math.min(S.paras.length-1, Math.floor(pct*S.paras.length)))
+function seek(e){
+  const pct=e.offsetX/document.getElementById('pgTrack').clientWidth
+  const i=Math.max(0,Math.min(S.paras.length-1,Math.floor(pct*S.paras.length)))
   stopAll(); playCurrent(i)
 }
 
-// ─── rAF highlight ────────────────────────────────────────────────────
-let _lastSent = -1
-
-function startRaf() {
-  _lastSent = -1
-  const tick = () => {
-    if (!S.playing || !S.ctx) return
-    const now = S.ctx.currentTime, ti = S.sentTimings
-    let active = -1
-    for (let i=0; i<ti.length; i++) if (now>=ti[i].ctxStart && now<ti[i].ctxEnd) {active=i;break}
-    if (active===-1 && ti.length>0 && now>=ti[ti.length-1].ctxStart) active=ti.length-1
-
-    if (active !== _lastSent) {
-      document.querySelectorAll('.sent.hl').forEach(el => el.classList.remove('hl'))
-      if (active >= 0) {
-        const el = document.getElementById('s'+active)
-        if (el) {
-          el.classList.add('hl')
-          el.scrollIntoView({behavior:'smooth', block:'nearest'})
-        }
+let _lastSent=-1
+function startRaf(){
+  _lastSent=-1
+  const tick=()=>{
+    if(!S.playing||!S.ctx) return
+    const now=S.ctx.currentTime, ti=S.sentTimings
+    let active=-1
+    for(let i=0;i<ti.length;i++) if(now>=ti[i].ctxStart&&now<ti[i].ctxEnd){active=i;break}
+    if(active===-1&&ti.length>0&&now>=ti[ti.length-1].ctxStart) active=ti.length-1
+    if(active!==_lastSent){
+      document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl'))
+      if(active>=0){
+        const el=document.getElementById('s'+active)
+        if(el){ el.classList.add('hl'); el.scrollIntoView({behavior:'smooth',block:'nearest'}) }
       }
-      _lastSent = active
+      _lastSent=active
     }
-    S.raf = requestAnimationFrame(tick)
+    S.raf=requestAnimationFrame(tick)
   }
-  S.raf = requestAnimationFrame(tick)
+  S.raf=requestAnimationFrame(tick)
 }
 
-// ─── UI helpers ───────────────────────────────────────────────────────
-function clearHl() {
-  document.querySelectorAll('.sent.hl').forEach(el => el.classList.remove('hl'))
+function clearHl(){ document.querySelectorAll('.sent.hl').forEach(el=>el.classList.remove('hl')) }
+function hlPara(idx){
+  document.querySelectorAll('.para.active').forEach(el=>el.classList.remove('active'))
+  const el=document.getElementById('p'+idx)
+  if(el){ el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'center'}) }
 }
-function hlPara(idx) {
-  document.querySelectorAll('.para.active').forEach(el => el.classList.remove('active'))
-  const el = document.getElementById('p'+idx)
-  if (el) { el.classList.add('active'); el.scrollIntoView({behavior:'smooth', block:'center'}) }
-}
-function updateProg() {
-  const n=S.paras.length, i=S.paraIdx+1
+function updateProg(){
+  const n=S.paras.length,i=S.paraIdx+1
   document.getElementById('pgLbl').textContent=`${i} / ${n}`
-  document.getElementById('pgFill').style.width=(n>0 ? i/n*100 : 0)+'%'
+  document.getElementById('pgFill').style.width=(n>0?i/n*100:0)+'%'
 }
-function setBtn(mode) {
-  const b = document.getElementById('btnPlay')
-  if (mode==='load')  { b.innerHTML='&#9203;'; b.disabled=true }
-  else if (mode==='pause') { b.innerHTML='&#9646;&#9646;'; b.disabled=false }
-  else { b.innerHTML='&#9654;'; b.disabled=false }
+function setBtn(mode){
+  const b=document.getElementById('btnPlay')
+  if(mode==='load'){b.innerHTML='&#9203;';b.disabled=true}
+  else if(mode==='pause'){b.innerHTML='&#9646;&#9646;';b.disabled=false}
+  else{b.innerHTML='&#9654;';b.disabled=false}
 }
-function showOv(msg) { document.getElementById('ovMsg').textContent=msg; document.getElementById('ov').classList.remove('gone') }
-function hideOv()    { document.getElementById('ov').classList.add('gone') }
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-
+function showOv(msg){document.getElementById('ovMsg').textContent=msg;document.getElementById('ov').classList.remove('gone')}
+function hideOv(){document.getElementById('ov').classList.add('gone')}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 let _tt=0
-function toast(msg, dur=2500) {
-  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show')
-  clearTimeout(_tt); _tt=setTimeout(() => el.classList.remove('show'), dur)
+function toast(msg,dur=2500){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show')
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),dur)
 }
 
-document.addEventListener('keydown', e => {
-  if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return
-  if (e.code==='Space')       { e.preventDefault(); togglePlay() }
-  else if (e.code==='ArrowRight'||e.code==='ArrowDown') { e.preventDefault(); nav(1) }
-  else if (e.code==='ArrowLeft' ||e.code==='ArrowUp')   { e.preventDefault(); nav(-1) }
+document.addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return
+  if(e.code==='Space'){e.preventDefault();togglePlay()}
+  else if(e.code==='ArrowRight'||e.code==='ArrowDown'){e.preventDefault();nav(1)}
+  else if(e.code==='ArrowLeft'||e.code==='ArrowUp'){e.preventDefault();nav(-1)}
 })
 
-// ─── Init ─────────────────────────────────────────────────────────────
 renderLibrary()
 </script>
 </body>
