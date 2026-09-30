@@ -244,11 +244,11 @@ const BookCache=(()=>{
       r.onerror=()=>rej(r.error)
     })
   }
-  async function put(id,title,paragraphs,lang){
+  async function put(id,title,paragraphs,lang,cover){
     const db=await _open()
     return new Promise((res,rej)=>{
       const tx=db.transaction(ST,'readwrite')
-      tx.objectStore(ST).put({id,title,paragraphs,lang,t:Date.now()})
+      tx.objectStore(ST).put({id,title,paragraphs,lang,cover:cover||null,t:Date.now()})
       tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)
     })
   }
@@ -267,7 +267,19 @@ const BookCache=(()=>{
       tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)
     })
   }
-  return{put,get,del}
+  async function list(){
+    const db=await _open()
+    return new Promise((res,rej)=>{
+      const items=[]
+      const r=db.transaction(ST,'readonly').objectStore(ST).openCursor()
+      r.onsuccess=e=>{
+        const c=e.target.result
+        if(c){items.push(c.value);c.continue()}else res(items)
+      }
+      r.onerror=()=>rej(r.error)
+    })
+  }
+  return{put,get,del,list}
 })()
 
 // ════════════════════════════════════════════════════════
@@ -329,9 +341,13 @@ async function renderLibrary(){
   let books=[]
   try{
     const r=await fetch('/books')
-    if(r.ok){books=await r.json();localStorage.setItem('lib_cache',JSON.stringify(books))}
+    if(r.ok) books=await r.json()
   }catch{
-    try{books=JSON.parse(localStorage.getItem('lib_cache')||'[]')}catch{}
+    // Offline fallback: read from IndexedDB (includes covers)
+    try{
+      const cached=await BookCache.list()
+      books=cached.sort((a,b)=>b.t-a.t).map(b=>({id:b.id,title:b.title,cover:b.cover,lang:b.lang}))
+    }catch{}
   }
   if(!books.length){
     ct.innerHTML=`
@@ -414,7 +430,7 @@ async function openBook(serverBookId){
     const r=await fetch('/book/'+serverBookId)
     const d=await r.json()
     if(!r.ok||d.error) throw new Error(d.error||'获取失败')
-    BookCache.put(serverBookId,d.title,d.paragraphs,d.lang).catch(()=>{})
+    BookCache.put(serverBookId,d.title,d.paragraphs,d.lang,d.cover).catch(()=>{})
     cntSet(serverBookId,d.paragraphs.length)
     hideOv()
     _startReading(serverBookId,d.title,d.paragraphs,d.lang||'z')
@@ -434,7 +450,7 @@ async function addBook(file){
     if(d.error) throw new Error(d.error)
     if(!d.book_id) throw new Error('云端存储未配置')
     const title=file.name.replace(/\.[^.]+$/,'')
-    BookCache.put(d.book_id,title,d.paragraphs,d.lang).catch(()=>{})
+    BookCache.put(d.book_id,title,d.paragraphs,d.lang,d.cover).catch(()=>{})
     cntSet(d.book_id,d.paragraphs.length)
     hideOv()
     _startReading(d.book_id,title,d.paragraphs,d.lang||'z')
