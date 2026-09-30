@@ -1,5 +1,5 @@
 """Book Reader – Edge TTS backend (online, low-latency, no local model)."""
-import io, re, os, sys, json, asyncio, warnings
+import io, re, os, sys, json, asyncio, warnings, base64
 warnings.filterwarnings('ignore')
 
 from flask import Flask, request, jsonify, send_file, Response
@@ -151,6 +151,48 @@ def extract_doc(data: bytes) -> str:
     raise RuntimeError('.doc 解析失败，建议在 Word 中另存为 .docx 格式后重试')
 
 
+# ─── Cover extraction ─────────────────────────────────────────────────────────
+
+def extract_cover(data: bytes, filename: str) -> str | None:
+    """Return cover as a base64 data-URL, or None."""
+    name = filename.lower()
+    try:
+        if name.endswith('.pdf'):
+            import fitz
+            doc = fitz.open(stream=data, filetype='pdf')
+            page = doc[0]
+            # Scale to ~120px wide thumbnail
+            scale = 120 / page.rect.width
+            pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale))
+            raw = pix.tobytes('jpeg')
+            if len(raw) > 60_000:          # safety cap
+                return None
+            return 'data:image/jpeg;base64,' + base64.b64encode(raw).decode()
+
+        if name.endswith('.epub'):
+            import tempfile, ebooklib
+            from ebooklib import epub
+            with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as f:
+                f.write(data); tmp = f.name
+            try:
+                book = epub.read_epub(tmp)
+            finally:
+                os.unlink(tmp)
+            for item in book.get_items():
+                mt = getattr(item, 'media_type', '') or ''
+                if not mt.startswith('image/'):
+                    continue
+                nm = (item.file_name or '').lower()
+                if 'cover' in nm or item.get_type() == ebooklib.ITEM_COVER:
+                    raw = item.get_content()
+                    if len(raw) > 60_000:
+                        return None
+                    return f'data:{mt};base64,' + base64.b64encode(raw).decode()
+    except Exception:
+        pass
+    return None
+
+
 # ─── Edge TTS synthesis ───────────────────────────────────────────────────────
 
 async def _synth_async(text: str, voice: str, rate: str):
@@ -213,7 +255,9 @@ def upload():
         if not paras:
             return jsonify({'error': 'No text found'}), 400
         lang = detect_lang(' '.join(paras[:10]))
-        return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras)})
+        cover = extract_cover(data, f.filename)
+        return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras),
+                        'cover': cover})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
