@@ -71,6 +71,60 @@ body.read #content{padding:76px 24px 108px;cursor:pointer}
   .book-del{opacity:.65;width:28px;height:28px;font-size:15px}
 }
 
+/* ── Baidu Pan button ── */
+.lib-bpan{background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 10px;font-size:15px;cursor:pointer;line-height:1}
+.lib-bpan:hover{border-color:#2e87d4;color:#2e87d4}
+.lib-bpan.connected{border-color:#2e87d4;color:#2e87d4}
+
+/* ── Modal backdrop ── */
+.bp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.bp-modal{background:var(--surf);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.bp-modal-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.bp-modal-head h2{font-size:15px;font-weight:600;flex:1}
+.bp-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.bp-close:hover{color:var(--text)}
+.bp-body{padding:16px;overflow-y:auto;flex:1}
+
+/* Auth panel */
+.bp-auth{display:flex;flex-direction:column;gap:14px}
+.bp-auth p{font-size:13px;color:var(--muted);line-height:1.6}
+.bp-auth a{color:#2e87d4;text-decoration:none}
+.bp-auth a:hover{text-decoration:underline}
+.bp-input{width:100%;background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none}
+.bp-input:focus{border-color:#2e87d4}
+.bp-input::placeholder{color:var(--muted)}
+.bp-row{display:flex;gap:8px}
+.bp-btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--sans)}
+.bp-btn.primary{background:#2e87d4;color:#fff}
+.bp-btn.primary:hover{background:#1d6fb8}
+.bp-btn.secondary{background:var(--surf2);border:1px solid var(--border);color:var(--muted)}
+.bp-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.bp-connected{display:flex;align-items:center;gap:8px;background:rgba(46,135,212,.1);border:1px solid rgba(46,135,212,.4);border-radius:8px;padding:10px 14px}
+.bp-connected .dot{width:8px;height:8px;border-radius:50%;background:#2e87d4;box-shadow:0 0 6px #2e87d4}
+.bp-connected span{flex:1;font-size:13px;color:var(--text)}
+.bp-discon{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline}
+.bp-discon:hover{color:var(--accent)}
+
+/* File browser */
+.bp-browser{display:flex;flex-direction:column;gap:0}
+.bp-path{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surf2);border-radius:8px;margin-bottom:10px;font-size:12px;overflow-x:auto;white-space:nowrap}
+.bp-crumb{color:#2e87d4;cursor:pointer;flex-shrink:0}
+.bp-crumb:hover{text-decoration:underline}
+.bp-crumb-sep{color:var(--muted)}
+.bp-files{display:flex;flex-direction:column;gap:2px;min-height:120px}
+.bp-file{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;transition:background .12s}
+.bp-file:hover{background:var(--surf2)}
+.bp-file.disabled{opacity:.4;cursor:default}
+.bp-file .ico{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.bp-file .nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp-file .sz{font-size:11px;color:var(--muted);flex-shrink:0}
+.bp-file .imp{background:#2e87d4;color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0}
+.bp-file .imp:hover{background:#1d6fb8}
+.bp-loading{display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:13px;gap:8px}
+.bp-err{color:#e05252;font-size:13px;padding:12px;text-align:center}
+.bp-setup{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.3);border-radius:8px;padding:12px;font-size:12px;color:#c9a82a;line-height:1.7}
+.bp-setup code{background:var(--surf2);border-radius:4px;padding:2px 6px;font-size:11px;color:var(--text);display:block;margin-top:6px;word-break:break-all}
+
 /* ── Reader paragraphs ── */
 .plist{max-width:700px;margin:0 auto}
 .para{
@@ -192,6 +246,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
         <h1>我的书架</h1>
         <button class="lib-refresh" onclick="renderLibrary()" title="刷新">↻</button>
         <button class="lib-add" onclick="fInput.click()">＋ 添加书籍</button>
+        <button class="lib-bpan" id="bpBtn" onclick="bpOpen()" title="百度网盘">☁</button>
       </div>
       <!-- Reader header row -->
       <div class="row-read gone" id="rowRead">
@@ -219,6 +274,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ══ BAIDU PAN MODAL ══════════════════════════════════ -->
+<div class="bp-backdrop gone" id="bpBackdrop" onclick="bpClickOutside(event)">
+  <div class="bp-modal" onclick="event.stopPropagation()">
+    <div class="bp-modal-head">
+      <span>☁</span>
+      <h2>百度网盘</h2>
+      <button class="bp-close" onclick="bpClose()">×</button>
+    </div>
+    <div class="bp-body" id="bpBody">
+      <!-- rendered by JS -->
+    </div>
   </div>
 </div>
 
@@ -688,6 +757,194 @@ document.addEventListener('keydown',e=>{
 })
 
 renderLibrary()
+
+// ════════════════════════════════════════════════════════
+//  Baidu Pan
+// ════════════════════════════════════════════════════════
+const BP = { connected: false, authUrl: '', dir: '/' }
+
+async function bpOpen() {
+  document.getElementById('bpBackdrop').classList.remove('gone')
+  bpRenderLoading()
+  try {
+    const r = await fetch('/bdpan/status')
+    const d = await r.json()
+    BP.connected = d.ok; BP.authUrl = d.auth_url
+    if (d.ok) {
+      bpRenderBrowser(BP.dir)
+    } else {
+      bpRenderAuth()
+    }
+  } catch (e) {
+    document.getElementById('bpBody').innerHTML =
+      `<div class="bp-err">连接失败: ${esc(e.message)}</div>`
+  }
+}
+
+function bpClose() {
+  document.getElementById('bpBackdrop').classList.add('gone')
+}
+
+function bpClickOutside(e) {
+  if (e.target === document.getElementById('bpBackdrop')) bpClose()
+}
+
+function bpRenderLoading() {
+  document.getElementById('bpBody').innerHTML =
+    '<div class="bp-loading"><div class="spin" style="width:28px;height:28px;border-width:2px"></div> 加载中…</div>'
+}
+
+function bpRenderAuth() {
+  const el = document.getElementById('bpBody')
+  el.innerHTML = `
+    <div class="bp-auth">
+      <div class="bp-setup">
+        ⚠ 首次使用需在 Supabase 后台执行一次 SQL（用于保存授权令牌）：
+        <code>CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value JSONB);</code>
+      </div>
+      <p>
+        1. 点击下方「前往授权」，在百度账号页面登录并允许访问<br>
+        2. 授权完成后页面会显示一串<strong>授权码</strong>，复制回来粘贴
+      </p>
+      <a class="bp-btn primary" href="${BP.authUrl}" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;text-align:center">
+        前往百度授权 ↗
+      </a>
+      <input class="bp-input" id="bpCode" placeholder="粘贴授权码…" autocomplete="off">
+      <div class="bp-row">
+        <button class="bp-btn primary" style="flex:1" onclick="bpConnect()">确认连接</button>
+        <button class="bp-btn secondary" onclick="bpClose()">取消</button>
+      </div>
+    </div>`
+  setTimeout(() => document.getElementById('bpCode')?.focus(), 100)
+}
+
+async function bpConnect() {
+  const code = (document.getElementById('bpCode')?.value || '').trim()
+  if (!code) { toast('请粘贴授权码'); return }
+  bpRenderLoading()
+  try {
+    const r = await fetch('/bdpan/connect', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    })
+    const d = await r.json()
+    if (d.error) throw new Error(d.error)
+    BP.connected = true
+    document.getElementById('bpBtn').classList.add('connected')
+    bpRenderBrowser('/')
+  } catch (e) {
+    toast('❌ 授权失败: ' + e.message, 4000)
+    bpRenderAuth()
+  }
+}
+
+async function bpDisconnect() {
+  await fetch('/bdpan/disconnect', { method: 'POST' }).catch(() => {})
+  BP.connected = false
+  document.getElementById('bpBtn').classList.remove('connected')
+  bpRenderAuth()
+}
+
+async function bpRenderBrowser(dir) {
+  BP.dir = dir
+  const el = document.getElementById('bpBody')
+
+  // Build breadcrumb
+  const parts = dir.replace(/\/$/, '').split('/').filter(Boolean)
+  let crumbs = `<span class="bp-crumb" onclick="bpRenderBrowser('/')">根目录</span>`
+  let cumPath = ''
+  for (const p of parts) {
+    cumPath += '/' + p
+    const cp = cumPath
+    crumbs += `<span class="bp-crumb-sep"> / </span><span class="bp-crumb" onclick="bpRenderBrowser('${esc(cp)}')">${esc(p)}</span>`
+  }
+
+  // Connected indicator
+  const header = `
+    <div class="bp-connected" style="margin-bottom:10px">
+      <div class="dot"></div>
+      <span>已连接百度网盘</span>
+      <button class="bp-discon" onclick="bpDisconnect()">断开</button>
+    </div>
+    <div class="bp-browser">
+      <div class="bp-path">${crumbs}</div>
+      <div class="bp-files" id="bpFiles">
+        <div class="bp-loading"><div class="spin" style="width:24px;height:24px;border-width:2px"></div> 读取目录…</div>
+      </div>
+    </div>`
+  el.innerHTML = header
+
+  try {
+    const r = await fetch('/bdpan/files?dir=' + encodeURIComponent(dir))
+    if (r.status === 401) { BP.connected = false; bpRenderAuth(); return }
+    const d = await r.json()
+    if (d.error) throw new Error(d.error)
+
+    const filesEl = document.getElementById('bpFiles')
+    if (!filesEl) return
+
+    const items = d.files || []
+    if (!items.length) {
+      filesEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">空目录</div>'
+      return
+    }
+
+    // Folders first, then files
+    const sorted = [...items.filter(f => f.isdir), ...items.filter(f => !f.isdir)]
+    filesEl.innerHTML = sorted.map(f => {
+      const ico = f.isdir ? '📁' : bpFileIco(f.ext)
+      const sz = f.isdir ? '' : bpFmtSize(f.size)
+      const impBtn = (!f.isdir && f.supported)
+        ? `<button class="imp" onclick="event.stopPropagation();bpImport(${f.fsid},'${esc(f.name)}')">导入</button>`
+        : (!f.isdir ? `<span class="sz" style="font-size:10px;color:var(--muted)">不支持</span>` : '')
+      const cls = 'bp-file' + (f.isdir ? '' : (!f.supported ? ' disabled' : ''))
+      const onclick = f.isdir ? `onclick="bpRenderBrowser('${esc(f.path)}')"` : ''
+      return `<div class="${cls}" ${onclick}>
+        <span class="ico">${ico}</span>
+        <span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>
+        <span class="sz">${sz}</span>
+        ${impBtn}
+      </div>`
+    }).join('')
+  } catch (e) {
+    const filesEl = document.getElementById('bpFiles')
+    if (filesEl) filesEl.innerHTML = `<div class="bp-err">❌ ${esc(e.message)}</div>`
+  }
+}
+
+async function bpImport(fsid, name) {
+  bpClose()
+  showOv(`从云盘导入「${name}」…`)
+  try {
+    const r = await fetch('/bdpan/import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fsid, name })
+    })
+    const d = await r.json()
+    if (d.error) throw new Error(d.error)
+    if (!d.book_id) throw new Error('云端存储未配置')
+    const title = d.title || name.replace(/\.[^.]+$/, '')
+    BookCache.put(d.book_id, title, d.paragraphs, d.lang, d.cover).catch(() => {})
+    cntSet(d.book_id, d.paragraphs.length)
+    hideOv()
+    _startReading(d.book_id, title, d.paragraphs, d.lang || 'z')
+  } catch (e) {
+    hideOv()
+    toast('❌ ' + e.message, 4000)
+    renderLibrary()
+  }
+}
+
+function bpFileIco(ext) {
+  return { pdf: '📄', epub: '📖', txt: '📝', md: '📝', docx: '📃', doc: '📃' }[ext] || '📎'
+}
+
+function bpFmtSize(n) {
+  if (!n) return ''
+  if (n < 1024) return n + ' B'
+  if (n < 1048576) return (n / 1024).toFixed(0) + ' KB'
+  return (n / 1048576).toFixed(1) + ' MB'
+}
 </script>
 </body>
 </html>

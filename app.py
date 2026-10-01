@@ -405,6 +405,186 @@ def delete_book(book_id):
     return jsonify({'ok': True})
 
 
+# ─── Baidu Pan ────────────────────────────────────────────────────────────────
+_BP_KEY    = 'q8WE4EpCsau1oS0MplgMKNBn'
+_BP_SECRET = '12CF96571CC04BA9A02B7CBD7AE9B02F'
+_BP_AUTH   = 'https://openapi.baidu.com/oauth/2.0/authorize'
+_BP_TOKEN  = 'https://openapi.baidu.com/oauth/2.0/token'
+_BP_LIST   = 'https://pan.baidu.com/rest/2.0/xpan/file'
+_BP_META   = 'https://pan.baidu.com/rest/2.0/xpan/multimedia'
+_BP_UA     = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+              '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
+def _bp_load():
+    if not _sb_ok():
+        return None
+    try:
+        r = _http.get(
+            f'{_SB_URL}/rest/v1/settings?key=eq.bdpan&select=value',
+            headers=_sb_hdrs(), timeout=8)
+        d = r.json()
+        return d[0]['value'] if isinstance(d, list) and d else None
+    except Exception:
+        return None
+
+def _bp_save(tok):
+    if not _sb_ok():
+        return
+    try:
+        _http.post(
+            f'{_SB_URL}/rest/v1/settings',
+            headers={**_sb_hdrs(), 'Prefer': 'resolution=merge-duplicates'},
+            json={'key': 'bdpan', 'value': tok}, timeout=8)
+    except Exception:
+        pass
+
+def _bp_refresh(tok):
+    import time
+    if time.time() < tok.get('issued_at', 0) + tok.get('expires_in', 0) - 300:
+        return tok
+    try:
+        r = _http.get(_BP_TOKEN, params={
+            'grant_type': 'refresh_token',
+            'refresh_token': tok['refresh_token'],
+            'client_id': _BP_KEY,
+            'client_secret': _BP_SECRET,
+        }, timeout=10)
+        n = r.json()
+        if 'access_token' in n:
+            n['issued_at'] = int(time.time())
+            _bp_save(n)
+            return n
+    except Exception:
+        pass
+    return tok
+
+@app.route('/bdpan/status')
+def bdpan_status():
+    tok = _bp_load()
+    auth_url = (f'{_BP_AUTH}?response_type=code&client_id={_BP_KEY}'
+                f'&redirect_uri=oob&scope=basic,netdisk&display=popup')
+    return jsonify({'ok': bool(tok), 'auth_url': auth_url})
+
+@app.route('/bdpan/connect', methods=['POST'])
+def bdpan_connect():
+    code = (request.json or {}).get('code', '').strip()
+    if not code:
+        return jsonify({'error': 'code required'}), 400
+    try:
+        r = _http.get(_BP_TOKEN, params={
+            'grant_type': 'authorization_code', 'code': code,
+            'client_id': _BP_KEY, 'client_secret': _BP_SECRET,
+            'redirect_uri': 'oob',
+        }, timeout=10)
+        d = r.json()
+        if 'access_token' not in d:
+            return jsonify({'error': d.get('error_description', '授权失败')}), 400
+        import time
+        d['issued_at'] = int(time.time())
+        _bp_save(d)
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/bdpan/disconnect', methods=['POST'])
+def bdpan_disconnect():
+    if _sb_ok():
+        try:
+            _http.delete(f'{_SB_URL}/rest/v1/settings?key=eq.bdpan',
+                         headers=_sb_hdrs(), timeout=8)
+        except Exception:
+            pass
+    return jsonify({'ok': True})
+
+@app.route('/bdpan/files')
+def bdpan_files():
+    tok = _bp_load()
+    if not tok:
+        return jsonify({'error': 'not_authorized'}), 401
+    tok = _bp_refresh(tok)
+    at = tok['access_token']
+    dir_path = request.args.get('dir', '/')
+    try:
+        r = _http.get(_BP_LIST, params={
+            'method': 'list', 'dir': dir_path, 'access_token': at,
+            'order': 'name', 'start': 0, 'limit': 200, 'web': 1,
+        }, timeout=15)
+        d = r.json()
+        if d.get('errno', 0) != 0:
+            return jsonify({'error': f'百度网盘 errno {d.get("errno")}'}), 400
+        EXTS = {'txt', 'epub', 'pdf', 'docx', 'doc', 'md'}
+        files = []
+        for f in d.get('list', []):
+            nm = f.get('server_filename', '')
+            ext = nm.rsplit('.', 1)[-1].lower() if '.' in nm else ''
+            files.append({
+                'fsid': f['fs_id'], 'name': nm, 'path': f['path'],
+                'isdir': bool(f.get('isdir', 0)), 'size': f.get('size', 0),
+                'supported': ext in EXTS, 'ext': ext,
+            })
+        return jsonify({'files': files, 'dir': dir_path})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/bdpan/import', methods=['POST'])
+def bdpan_import():
+    body = request.json or {}
+    fsid = body.get('fsid')
+    filename = body.get('name', 'file')
+    tok = _bp_load()
+    if not tok:
+        return jsonify({'error': 'not_authorized'}), 401
+    tok = _bp_refresh(tok)
+    at = tok['access_token']
+    if not fsid:
+        return jsonify({'error': 'fsid required'}), 400
+    try:
+        r = _http.get(_BP_META, params={
+            'method': 'filemetas', 'fsids': f'[{fsid}]',
+            'dlink': 1, 'access_token': at, 'extra': 1,
+        }, timeout=10)
+        meta = r.json()
+        if meta.get('errno', 0) != 0:
+            return jsonify({'error': f'元数据 errno {meta.get("errno")}'}), 400
+        items = meta.get('list', [])
+        if not items:
+            return jsonify({'error': '文件不存在'}), 404
+        dlink = items[0].get('dlink', '')
+        if not dlink:
+            return jsonify({'error': '无下载链接'}), 400
+        dl = _http.get(dlink, params={'access_token': at},
+                       headers={'User-Agent': _BP_UA},
+                       timeout=60, allow_redirects=True)
+        if dl.status_code != 200:
+            return jsonify({'error': f'下载失败 HTTP {dl.status_code}'}), 400
+        data = dl.content
+        nl = filename.lower()
+        if nl.endswith(('.txt', '.md', '.text')):
+            text = data.decode('utf-8', errors='replace')
+        elif nl.endswith('.pdf'):
+            text = extract_pdf(data)
+        elif nl.endswith('.epub'):
+            text = extract_epub(data)
+        elif nl.endswith('.docx'):
+            text = extract_docx(data)
+        elif nl.endswith('.doc'):
+            text = extract_doc(data)
+        else:
+            return jsonify({'error': '不支持的格式'}), 400
+        paras = split_paragraphs(text)
+        if not paras:
+            return jsonify({'error': '未提取到文本'}), 400
+        lang = detect_lang(' '.join(paras[:10]))
+        title = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        cover = extract_cover(data, filename) or _svg_cover(title)
+        book_id = str(uuid.uuid4())
+        sb_save(book_id, title, cover, paras, lang)
+        return jsonify({'paragraphs': paras, 'lang': lang, 'count': len(paras),
+                        'cover': cover, 'book_id': book_id, 'title': title})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/synthesize', methods=['POST'])
 def synthesize():
     body = request.json or {}
