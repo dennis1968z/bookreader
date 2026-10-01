@@ -407,7 +407,7 @@ def delete_book(book_id):
 
 # ─── Baidu Pan ────────────────────────────────────────────────────────────────
 _BP_KEY    = 'q8WE4EpCsau1oS0MplgMKNBn'
-_BP_SECRET = '12CF96571CC04BA9A02B7CBD7AE9B02F'
+_BP_SECRET = 'PA4MhwB5RE7DacKtoP2i8ikCnNzAqYTD'
 _BP_AUTH   = 'https://openapi.baidu.com/oauth/2.0/authorize'
 _BP_TOKEN  = 'https://openapi.baidu.com/oauth/2.0/token'
 _BP_LIST   = 'https://pan.baidu.com/rest/2.0/xpan/file'
